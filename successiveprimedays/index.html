@@ -1,6 +1,7 @@
 <html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <head>
-<title>Successive Primenumber Days</title>
+<title>連続する素数日を探す</title>
 <script>
 var primes=[]
 
@@ -32,7 +33,7 @@ function sPrimeDays(year1, year2) {
   var days=[];
   var d1,d2;
   for (var y=year1; y<=year2; y++) {
-    console.log(y);
+    //console.log(y);
     if ( (y % 400 == 0) || (y % 100 != 0) && (y % 4 == 0) ) { 
       days = [[131,201], [229,301], [331,401], [531,601], [731,801], [831,901], [1031, 1101]];
     } else {
@@ -59,7 +60,7 @@ function show() {
   var year1=+yr1.value;
   var year2=+yr2.value;
   if (year1<1 || year1>9999 || year2<1 || year2>9999 || year1>year2) {
-    alert("Error: illegal input");
+    alert("Error: 入力値が不正です");
     return false;
   }
   setUp()
@@ -84,13 +85,14 @@ function show() {
 </script>
 </head>
 <body>
-<h1>Successive Prime Number Days</h1>
-This app lists successive prime number days between given two years. A prime number day means a day which becomes a prime number when expressed as yyyymmdd.
+<h1>連続する素数日の検索</h1>
+日付を8桁の数字で表したときに素数になる日を「素数日」と呼ぶことにして、その素数日が2日連続する日を探すプログラムです。
+作成にあたってははむかずさんの<a href="http://hamukazu.github.io/primedayapp/">素数日計算プログラム</a>を大いに参考にさせて頂きました。
 <p>
-Enter start and end years (1-9999)
+検索する最初と最初の年を入力して下さい (1-9999)
 <form id="form1" onSubmit="return show();">
-Start Year <input type="text" id="yr1"/>
-End Year <input type="text" id="yr2"/>
+最初の年 <input type="text" id="yr1"/>
+最後の年 <input type="text" id="yr2"/>
 <input type="submit" />
 </form>
 </p>
