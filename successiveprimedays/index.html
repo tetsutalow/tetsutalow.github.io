@@ -1,0 +1,100 @@
+<html>
+<head>
+<title>Successive Primenumber Days</title>
+<script>
+var primes=[]
+
+function setUp() {
+  var f=[]
+  for (var i=0; 2*i+3<10000; ++i)
+    f.push(true);
+  primes.push(2)
+  for (var i=0; 2*i+3<10000; ++i) {
+    if (f[i]) {
+      var p=2*i+3;
+      primes.push(p);
+      for (var j=i+p; 2*j+3<10000; j+=p)
+        f[j]=false;
+    }
+  }
+}
+
+function isPrime(n) {
+  for (var i=0; i<primes.length; ++i) {
+    if (n%primes[i]==0)
+      return false;
+  }
+  return true
+}
+
+function sPrimeDays(year1, year2) {
+  var ret=[];
+  var days=[];
+  var d1,d2;
+  for (var y=year1; y<=year2; y++) {
+    console.log(y);
+    if ( (y % 400 == 0) || (y % 100 != 0) && (y % 4 == 0) ) { 
+      days = [[131,201], [229,301], [331,401], [531,601], [731,801], [831,901], [1031, 1101]];
+    } else {
+      days = [[131,201], [331,401], [531,601], [731,801], [831,901], [1031, 1101]];
+    }
+    for (var i=0; i<days.length; i++) {
+      d1 = y * 10000 + days[i][0];
+      d2 = y * 10000 + days[i][1];
+      if (isPrime(d1) && isPrime(d2)) {
+        ret.push(d1 + " and " + d2)
+      }
+    }
+    d1 = y * 10000 + 1231;
+    d2 = (y + 1) * 10000 + 101; 
+    if (isPrime(d1) && isPrime(d2))
+      ret.push(d1 + " and " + d2);
+  }
+  return ret;
+}
+                                 
+function show() {
+  var yr1=document.getElementById("yr1");
+  var yr2=document.getElementById("yr2");
+  var year1=+yr1.value;
+  var year2=+yr2.value;
+  if (year1<1 || year1>9999 || year2<1 || year2>9999 || year1>year2) {
+    alert("Error: illegal input");
+    return false;
+  }
+  setUp()
+//  console.log(year1);
+  var result=document.getElementById("result");
+  while (result.firstChild) result.removeChild(result.firstChild);
+  var spds=sPrimeDays(year1,year2);
+  var tbl=document.createElement("table");
+  for (var i=0; i<spds.length; ++i) {
+    var tr=document.createElement("tr");
+    var td=document.createElement("td");
+    td.innerHTML=spds[i];
+    tr.appendChild(td);
+    tbl.appendChild(tr);
+  }
+  t=document.createElement("p");
+  t.innerHTML="Successive primedays from "+year1+" to "+year2+":"
+  result.appendChild(t);
+  result.appendChild(tbl);
+  return false;
+}
+</script>
+</head>
+<body>
+<h1>Successive Prime Number Days</h1>
+This app lists successive prime number days between given two years. A prime number day means a day which becomes a prime number when expressed as yyyymmdd.
+<p>
+Enter start and end years (1-9999)
+<form id="form1" onSubmit="return show();">
+Start Year <input type="text" id="yr1"/>
+End Year <input type="text" id="yr2"/>
+<input type="submit" />
+</form>
+</p>
+<div id="result">
+</div>
+</body>
+</html>
