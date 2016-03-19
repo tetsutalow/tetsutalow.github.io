@@ -38,7 +38,7 @@ function show() {
   var cd = calcCheckdigit(base);
   t=document.createElement("p");
   t.innerHTML = "検査用数字は" + cd + "です。";
-  t.innerHTML = "完全な個人番号は " + ("00000000000"+(base*10+cd)).substr(-12) + "です。";
+  t.innerHTML += "完全な個人番号は " + ("00000000000"+(base*10+cd)).substr(-12) + "です。";
   result.appendChild(t);
   return false;
 }
