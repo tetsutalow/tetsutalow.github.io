@@ -9,7 +9,7 @@ function setUp() {
   var f=[];
   for (var i=0; 2*i+3<10000; ++i)
     f.push(true);
-  primes.push(2)
+  primes.push(2);
   for (var i=0; 2*i+3<10000; ++i) {
     if (f[i]) {
       var p=2*i+3;
@@ -22,7 +22,7 @@ function setUp() {
 
 function isPrime(n) {
   for (var i=0; i<primes.length; ++i) {
-    if (n%primes[i]==0)
+    if (n%primes[i]===0)
       return false;
   }
   return true;
@@ -75,7 +75,7 @@ function show() {
     tbl.appendChild(tr);
   }
   t=document.createElement("p");
-  t.innerHTML="Successive primedays from "+year1+" to "+year2+":"
+  t.innerHTML="Successive primedays from "+year1+" to "+year2+":";
   result.appendChild(t);
   result.appendChild(tbl);
   return false;
