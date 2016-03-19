@@ -3,10 +3,10 @@
 <head>
 <title>連続する素数日を探す</title>
 <script>
-var primes=[]
+var primes=[];
 
 function setUp() {
-  var f=[]
+  var f=[];
   for (var i=0; 2*i+3<10000; ++i)
     f.push(true);
   primes.push(2)
@@ -25,7 +25,7 @@ function isPrime(n) {
     if (n%primes[i]==0)
       return false;
   }
-  return true
+  return true;
 }
 
 function sPrimeDays(year1, year2) {
@@ -33,7 +33,6 @@ function sPrimeDays(year1, year2) {
   var days=[];
   var d1,d2;
   for (var y=year1; y<=year2; y++) {
-    //console.log(y);
     if ( (y % 400 == 0) || (y % 100 != 0) && (y % 4 == 0) ) { 
       days = [[131,201], [229,301], [331,401], [531,601], [731,801], [831,901], [1031, 1101]];
     } else {
@@ -43,7 +42,7 @@ function sPrimeDays(year1, year2) {
       d1 = y * 10000 + days[i][0];
       d2 = y * 10000 + days[i][1];
       if (isPrime(d1) && isPrime(d2)) {
-        ret.push(d1 + " and " + d2)
+        ret.push(d1 + " and " + d2);
       }
     }
     d1 = y * 10000 + 1231;
@@ -63,8 +62,7 @@ function show() {
     alert("Error: 入力値が不正です");
     return false;
   }
-  setUp()
-//  console.log(year1);
+  setUp();
   var result=document.getElementById("result");
   while (result.firstChild) result.removeChild(result.firstChild);
   var spds=sPrimeDays(year1,year2);
