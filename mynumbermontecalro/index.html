@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>個人番号の誤り率をモンテカルロ法で計算する</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+
+<script>
+var weight=[2,3,4,5,6,7,2,3,4,5,6];
+var pow=[1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,10000000000,100000000000];
+var t,timer,sflag=false;
+var o=[],ot=0; // 出現数
+var e=[],et=0; // 1桁誤り数
+var s=[],st=0; // 入替誤り数
+
+function calcSum(basenumber) {
+  var sum = 0;
+  for (var i=0; i<11; ++i) {
+  	sum += basenumber % 10 * weight[i];
+  	basenumber = Math.floor(basenumber / 10);
+  }
+  return sum;
+}
+
+function calcCheckdigit(basenumber) {
+  var s = calcSum(basenumber) % 11;
+  if (s <= 1)
+  	return 0;
+  return 11 - s;
+}
+
+function isValidMynumber(mynumber) {
+  var c = calcCheckdigit(Math.floor(mynumber / 10));
+  return c === mynumber % 10;
+}
+
+function update() {
+  var base = Math.floor(Math.random()*100000000000);
+  var cd = calcCheckdigit(base);
+  var mn = base * 10 + cd; 
+  t.innerHTML = ("000000000000"+mn).substr(-12) + "<br />";	
+  o[cd]++;
+  ot++;
+  document.getElementById("o"+String(cd)).textContent = o[cd];
+  document.getElementById("ot").textContent = ot;
+  
+  // 1桁打ち間違い
+  var c1 = Math.floor(Math.random()*12); // 検査用数字を含め右からどの桁？
+  var tn = Math.floor(mn / pow[c1]) % 10; // 着目している桁
+  var tn2 = (tn+Math.floor(Math.random()*9)+1) % 10; // 着目している桁の新しい数値
+  var mn2 = mn+(tn2-tn)*pow[c1]; // 新しい数値
+  var mn2s = ("000000000000"+mn2).substr(-12); // 文字列版
+  t.innerHTML += mn2s.substring(0,11-c1) + "<b>" +tn2+"</b>" + mn2s.substring(12-c1,12);	
+    
+  if (isValidMynumber(mn2)) {
+    e[cd]++;
+    et++;
+    document.getElementById("e"+String(cd)).textContent = e[cd] + "(" + (e[cd]/o[cd] * 100).toFixed(2) + "%)" ;
+    document.getElementById("et").textContent = et + "(" + (et/ot*100).toFixed(2) + "%)";
+    t.innerHTML += " 一致 <br />";
+  } else {
+    t.innerHTML += "<br />";
+  }
+
+  // 2桁入れ替え間違い
+  do {
+    c1 = Math.floor(Math.random()*11); // 検査用数字を含め右からどの桁？
+    tn = Math.floor(mn / pow[c1]) % 10; // 着目している桁（右）
+    tn2 = Math.floor(mn / pow[c1+1]) % 10; // 着目している桁（左）
+  } while (tn === tn2); // 同じ数値の入れ替えは除外
+  mn2 = mn+(tn2-tn)*pow[c1]+(tn-tn2)*pow[c1+1]; // 新しい数値
+  mn2s = ("000000000000"+mn2).substr(-12); // 文字列版
+  t.innerHTML += mn2s.substring(0,10-c1) + "<b>" + mn2s.substring(10-c1,12-c1) +"</b>" + mn2s.substring(12-c1,12);	
+  
+  if (isValidMynumber(mn2)) {
+    s[cd]++;
+    st++;
+    document.getElementById("s"+String(cd)).textContent = s[cd] + "(" + (s[cd]/o[cd] * 100).toFixed(2) + "%)" ;
+    document.getElementById("st").textContent = st + "(" + (st/ot*100).toFixed(2) + "%)";
+    t.innerHTML += " 一致 <br />";
+    document.getElementById("result2").innerHTML += mn2s.substring(0,10-c1) + "<b>" + mn2s.substring(10-c1,12-c1) +"</b>" + mn2s.substring(12-c1,12) + "<br />";	
+  } else {
+    t.innerHTML += "<br />";
+  }
+}
+                             
+function setup() {
+  t=document.getElementById("result"); // メッセージ用
+  for (var i=0; i<10; i++) {
+  	o[i]=0;
+  	e[i]=0;
+  	s[i]=0;
+  }
+}
+
+function toggle() {
+  if (sflag) { // 実行中
+	clearInterval(timer);
+	sflag = false;
+	document.getElementById("toggle").textContent = "開始";
+  } else { // 中断中
+	timer = setInterval('update()', 1);
+	sflag=true;
+	document.getElementById("toggle").textContent = "中断";
+  }
+}
+
+function reset() {
+  ot=0; et=0; st=0;
+  document.getElementById("ot").textContent = '';
+  document.getElementById("et").textContent = '';
+  document.getElementById("st").textContent = '';
+  for (var i=0; i<10; i++) {
+  	o[i]=0; document.getElementById("o"+String(i)).textContent = '';
+  	e[i]=0; document.getElementById("e"+String(i)).textContent = '';
+  	s[i]=0; document.getElementById("s"+String(i)).textContent = '';
+  }
+  document.getElementById("result2").innerHTML = "2桁入れ替え誤り発生個人番号<br />";	
+}
+</script>
+<style type="text/css">
+b {color: red;}
+</style>
+</head>
+<body onload="setup();">
+<h1>マイナンバーにおける個人番号の検査用数字ごとの誤り率を乱数で計算</h1>
+<p>
+注：このサイトでは、計算処理は全てブラウザ内で行われますので、
+生成された個人番号はサーバ含めどこにも送信されいませんが、
+これを不用意に公開したり他人に渡したりしないで下さい。<br />
+</p>
+<p>
+ここではデジタル・フォレンジック研究会で書いたコラム
+<a href="https://digitalforensic.jp/2016/03/14/column404/">「マイナンバーのチェックデジットについて」</a>
+で指摘した問題を検証します。ただし、コラムを書くときに用いたプログラムと微妙に「誤り発生率」の定義が違うので、数値も少し違います。
+</p>
+<p>
+このプログラムでは以下の手順で誤り率を計算しています。
+<ol>
+<li>11桁の乱数を発生し、それに検査用数字を計算して加えて個人番号を生成。検査用数字に応じて出現数を1増やす。
+<li>12桁のうち乱数で決めた桁の数字を書き換え、それでも個人番号として有効（検査用数字が一致）なら、1桁誤り発生数を1増やす。
+<li>12桁のうち乱数で決めた隣り合う2桁の数字を入れ替え、それでも個人番号として有効（検査用数字が一致）なら、2桁入替誤り発生数を1増やす。
+</ol>
+なお、2桁入替誤りが発生したときにはその個人番号を下に列挙しています。赤字の2桁を入れ替えても、個人番号として有効なので確かめてみて下さい。
+</p>
+<p>
+<button type="button" id="toggle" onclick="toggle();">開始</button>
+<button type="button" onclick="reset();">リセット</button>
+
+
+<div>
+<p id="result">
+</p>
+<table>
+<tr><th>検査用数字</th><th>出現数</th><th>1桁誤り発生数</th><th>2桁入替誤り発生数</th></tr>
+<tr><td align="center">0</td><td align="center" id="o0"></td><td align="center" id="e0"></td><td align="center" id="s0"></td></tr>
+<tr><td align="center">1</td><td align="center" id="o1"></td><td align="center" id="e1"></td><td align="center" id="s1"></td></tr>
+<tr><td align="center">2</td><td align="center" id="o2"></td><td align="center" id="e2"></td><td align="center" id="s2"></td></tr>
+<tr><td align="center">3</td><td align="center" id="o3"></td><td align="center" id="e3"></td><td align="center" id="s3"></td></tr>
+<tr><td align="center">4</td><td align="center" id="o4"></td><td align="center" id="e4"></td><td align="center" id="s4"></td></tr>
+<tr><td align="center">5</td><td align="center" id="o5"></td><td align="center" id="e5"></td><td align="center" id="s5"></td></tr>
+<tr><td align="center">6</td><td align="center" id="o6"></td><td align="center" id="e6"></td><td align="center" id="s6"></td></tr>
+<tr><td align="center">7</td><td align="center" id="o7"></td><td align="center" id="e7"></td><td align="center" id="s7"></td></tr>
+<tr><td align="center">8</td><td align="center" id="o8"></td><td align="center" id="e8"></td><td align="center" id="s8"></td></tr>
+<tr><td align="center">9</td><td align="center" id="o9"></td><td align="center" id="e9"></td><td align="center" id="s9"></td></tr>
+<tr><th align="center">合計</th><th align="center" id="ot"></th><th align="center" id="et"></th><th align="center" id="st"></th></tr>
+</table>
+<p id="result2">
+2桁入れ替え誤り発生個人番号<br />
+</p>
+</div>
+Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+<a href="../">すなばに戻る</a>
+</body>
+</html>
