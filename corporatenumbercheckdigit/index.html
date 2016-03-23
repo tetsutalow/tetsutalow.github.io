@@ -1,0 +1,78 @@
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>法人番号の検査用数字を計算する</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+<script>
+
+pow = []; // 10のべき乗を入れる
+
+function calcSum(basenumber) {
+  var sum = 0;
+  for (var i=0; i<12; ++i) {
+  	sum += basenumber % 10 * (i % 2 ? 2 : 1);
+  	basenumber = Math.floor(basenumber / 10);
+  }
+  return sum;
+}
+
+function calcCheckdigit(basenumber) {
+  var s = calcSum(basenumber) % 9;
+  return 9 - s;
+}
+
+function isValidCorpnumber(corpnumber) {
+  var c = calcCheckdigit(corpnumber % pow[12]);
+  return c === Math.floor(corpnumber / pow[12]);
+}
+                                 
+function show() {
+  var basenumber=document.getElementById("basenumber");
+  var base=+basenumber.value;
+
+  var result=document.getElementById("result");
+  while (result.firstChild) result.removeChild(result.firstChild); // 表示を消す
+  for (var i=0; i<14; i++) {
+  	pow[i]=Math.pow(10,i);
+  }
+
+  var t=document.createElement("p"); // メッセージ用
+
+  if (base<0 || base>999999999999) {
+	t.innerHTML = "<b>エラーです。正しい数値を入力して下さい。</b>";
+	result.appendChild(t);
+    return false;
+  }
+  var cd = calcCheckdigit(base);
+
+  t.innerHTML = "検査用数字は" + cd + "です。";
+  t.innerHTML += "完全な法人番号は " + String(cd)+("0000000000000"+String(base)).substr(-12)  + "です。";
+  result.appendChild(t);
+
+  return false;
+}
+</script>
+<style type="text/css">
+b {color: red;}
+</style>
+</head>
+<body>
+<h1>マイナンバーにおける法人番号の検査用数字を計算</h1>
+<form id="form1" onSubmit="return show();">
+<input type="text" id="basenumber"/>
+<input type="submit" value="計算する" />
+</form>
+</p>
+<div id="result">
+</div>
+Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+<a href="../">すなばに戻る</a>
+</body>
+</html>
