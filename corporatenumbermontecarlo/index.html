@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>法人番号の誤り率をモンテカルロ法で計算する</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+
+<script>
+var pow=[]; // 10のべき乗数をsetupで入れる
+var t,timer,sflag=false;
+var o=[],ot=0; // 出現数
+var e=[],et=0; // 1桁誤り数
+var s=[],st=0; // 入替誤り数
+
+function calcSum(basenumber) {
+  var sum = 0;
+  for (var i=0; i<12; ++i) {
+  	sum += basenumber % 10 * (i % 2 ? 2 : 1);
+  	basenumber = Math.floor(basenumber / 10);
+  }
+  return sum;
+}
+
+function calcCheckdigit(basenumber) {
+  var s = calcSum(basenumber) % 9;
+  return 9 - s;
+}
+
+function isValidCorporatenumber(corporatenumber) {
+  var c = calcCheckdigit(corporatenumber % pow[12]);
+  return c === Math.floor(corporatenumber / pow[12]);
+}
+
+function update() {
+  var base = Math.floor(Math.random()*pow[12]);
+  var cd = calcCheckdigit(base);
+  var cn = base + cd*pow[12]; 
+  t.innerHTML = String(cn) + "<br />";	
+  o[cd]++;
+  ot++;
+  document.getElementById("o"+String(cd)).textContent = o[cd];
+  document.getElementById("ot").textContent = ot;
+  
+  // 1桁打ち間違い
+  var c1 = Math.floor(Math.random()*13); // 検査用数字を含め右からどの桁？
+  var tn = Math.floor(cn / pow[c1]) % 10; // 着目している桁
+  var tn2 = (tn+Math.floor(Math.random()*9)+1) % 10; // 着目している桁の新しい数値
+  var cn2 = cn+(tn2-tn)*pow[c1]; // 新しい数値
+  var cn2s = ("0000000000000"+cn2).substr(-13); // 文字列版
+  t.innerHTML += cn2s.substring(0,12-c1) + "<b>" +tn2+"</b>" + cn2s.substring(13-c1,13);	
+    
+  if (isValidCorporatenumber(cn2)) {
+    e[cd]++;
+    et++;
+    document.getElementById("e"+String(cd)).textContent = e[cd] + "(" + (e[cd]/o[cd] * 100).toFixed(2) + "%)" ;
+    document.getElementById("et").textContent = et + "(" + (et/ot*100).toFixed(2) + "%)";
+    t.innerHTML += " 一致 <br />";
+  } else {
+    t.innerHTML += "<br />";
+  }
+
+  // 2桁入れ替え間違い
+  do {
+    c1 = Math.floor(Math.random()*12); // 検査用数字を含め右からどの桁？
+    tn = Math.floor(cn / pow[c1]) % 10; // 着目している桁（右）
+    tn2 = Math.floor(cn / pow[c1+1]) % 10; // 着目している桁（左）
+  } while (tn === tn2); // 同じ数値の入れ替えは除外
+  cn2 = cn+(tn2-tn)*pow[c1]+(tn-tn2)*pow[c1+1]; // 新しい数値
+  cn2s = ("0000000000000"+cn2).substr(-13); // 文字列版
+  t.innerHTML += cn2s.substring(0,11-c1) + "<b>" + cn2s.substring(11-c1,13-c1) +"</b>" + cn2s.substring(13-c1,13);	
+  
+  if (isValidCorporatenumber(cn2)) {
+    s[cd]++;
+    st++;
+    document.getElementById("s"+String(cd)).textContent = s[cd] + "(" + (s[cd]/o[cd] * 100).toFixed(2) + "%)" ;
+    document.getElementById("st").textContent = st + "(" + (st/ot*100).toFixed(2) + "%)";
+    t.innerHTML += " 一致 <br />";
+    document.getElementById("result2").innerHTML += cn2s.substring(0,11-c1) + "<b>" + cn2s.substring(11-c1,13-c1) +"</b>" + cn2s.substring(13-c1,13) + "<br />";	
+  } else {
+    t.innerHTML += "<br />";
+  }
+}
+                             
+function setup() {
+  t=document.getElementById("result"); // メッセージ用
+  for (var i=0; i<10; i++) {
+  	o[i]=0;
+  	e[i]=0;
+  	s[i]=0;
+  }
+  for (i=0; i<13; i++) {
+  	pow[i] = Math.pow(10,i);
+  }
+}
+
+function toggle() {
+  if (sflag) { // 実行中
+	clearInterval(timer);
+	sflag = false;
+	document.getElementById("toggle").textContent = "開始";
+  } else { // 中断中
+	timer = setInterval('update()', 1);
+	sflag=true;
+	document.getElementById("toggle").textContent = "中断";
+  }
+}
+
+function reset() {
+  ot=0; et=0; st=0;
+  document.getElementById("ot").textContent = '';
+  document.getElementById("et").textContent = '';
+  document.getElementById("st").textContent = '';
+  for (var i=0; i<10; i++) {
+  	o[i]=0; document.getElementById("o"+String(i)).textContent = '';
+  	e[i]=0; document.getElementById("e"+String(i)).textContent = '';
+  	s[i]=0; document.getElementById("s"+String(i)).textContent = '';
+  }
+  document.getElementById("result2").innerHTML = "2桁入れ替え誤り発生法人番号<br />";	
+}
+</script>
+<style type="text/css">
+b {color: red;}
+</style>
+</head>
+<body onload="setup();">
+<h1>マイナンバーにおける法人番号の検査用数字ごとの誤り率を乱数で計算</h1>
+<p>
+ここではデジタル・フォレンジック研究会で書いたコラム
+<a href="https://digitalforensic.jp/2016/03/14/column404/">「マイナンバーのチェックデジットについて」</a>
+で書きそびれた法人番号のチェックデジット問題を検証します。
+</p>
+<p>
+このプログラムでは以下の手順で誤り率を計算しています。
+<ol>
+<li>12桁の乱数を発生し、それに検査用数字を計算して加えて法人番号を生成。検査用数字に応じて出現数を1増やす。
+<li>13桁のうち乱数で決めた桁の数字を書き換え、それでも法人番号として有効（検査用数字が一致）なら、1桁誤り発生数を1増やす。
+<li>13桁のうち乱数で決めた隣り合う2桁の数字を入れ替え、それでも法人番号として有効（検査用数字が一致）なら、2桁入替誤り発生数を1増やす。
+</ol>
+なお、2桁入替誤りが発生したときにはその法人番号を下に列挙しています。赤字の2桁を入れ替えても、法人番号として有効なので確かめてみて下さい。
+</p>
+<p>
+<button type="button" id="toggle" onclick="toggle();">開始</button>
+<button type="button" onclick="reset();">リセット</button>
+
+
+<div>
+<p id="result">
+</p>
+<table>
+<tr><th>検査用数字</th><th>出現数</th><th>1桁誤り発生数</th><th>2桁入替誤り発生数</th></tr>
+<tr><td align="center">0</td><td align="center" id="o0"></td><td align="center" id="e0"></td><td align="center" id="s0"></td></tr>
+<tr><td align="center">1</td><td align="center" id="o1"></td><td align="center" id="e1"></td><td align="center" id="s1"></td></tr>
+<tr><td align="center">2</td><td align="center" id="o2"></td><td align="center" id="e2"></td><td align="center" id="s2"></td></tr>
+<tr><td align="center">3</td><td align="center" id="o3"></td><td align="center" id="e3"></td><td align="center" id="s3"></td></tr>
+<tr><td align="center">4</td><td align="center" id="o4"></td><td align="center" id="e4"></td><td align="center" id="s4"></td></tr>
+<tr><td align="center">5</td><td align="center" id="o5"></td><td align="center" id="e5"></td><td align="center" id="s5"></td></tr>
+<tr><td align="center">6</td><td align="center" id="o6"></td><td align="center" id="e6"></td><td align="center" id="s6"></td></tr>
+<tr><td align="center">7</td><td align="center" id="o7"></td><td align="center" id="e7"></td><td align="center" id="s7"></td></tr>
+<tr><td align="center">8</td><td align="center" id="o8"></td><td align="center" id="e8"></td><td align="center" id="s8"></td></tr>
+<tr><td align="center">9</td><td align="center" id="o9"></td><td align="center" id="e9"></td><td align="center" id="s9"></td></tr>
+<tr><th align="center">合計</th><th align="center" id="ot"></th><th align="center" id="et"></th><th align="center" id="st"></th></tr>
+</table>
+<p id="result2">
+2桁入れ替え誤り発生法人番号<br />
+</p>
+</div>
+Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+<a href="../">すなばに戻る</a>
+</body>
+</html>
