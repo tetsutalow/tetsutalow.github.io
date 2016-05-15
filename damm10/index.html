@@ -1,0 +1,73 @@
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>Dammアルゴリズムによるチェックデジットを計算する</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+<script>
+
+// Taken from Wikipedia: Damm_Algorithm
+var table = [
+  [0, 3, 1, 7, 5, 9, 8, 6, 4, 2],
+  [7, 0, 9, 2, 1, 5, 4, 8, 6, 3],
+  [4, 2, 0, 6, 8, 7, 1, 3, 5, 9],
+  [1, 7, 5, 0, 9, 8, 3, 4, 2, 6],
+  [6, 1, 2, 3, 0, 4, 5, 9, 7, 8],
+  [3, 6, 7, 4, 2, 0, 9, 5, 8, 1],
+  [5, 8, 6, 9, 7, 2, 0, 1, 3, 4],
+  [8, 9, 4, 5, 3, 6, 2, 0, 1, 7],
+  [9, 4, 3, 8, 6, 1, 7, 2, 0, 5],
+  [2, 5, 8, 1, 4, 3, 6, 7, 9, 0]
+];
+
+function calcDamm(basenumber) { // Damm Algorighm
+  var s,c,damm = 0;
+  s = String(basenumber); 
+  for (var i=0; i<s.length; ++i) {
+  	damm = table[damm][s.charAt(i)];
+  }
+  return damm;
+}
+
+function show() {
+  var basenumber=document.getElementById("basenumber");
+  var base=basenumber.value;
+
+  var result=document.getElementById("result");
+  while (result.firstChild) result.removeChild(result.firstChild); // 表示を消す
+
+  var t=document.createElement("p"); // メッセージ用
+
+  var cd = calcDamm(base);
+
+  t.innerHTML = "Dammアルゴリズムでのチェックデジットは" + cd + "です。";
+  t.innerHTML += "これを加えると番号は " + String(base) + cd + "です。";
+  result.appendChild(t);
+
+  return false;
+}
+</script>
+<style type="text/css">
+b {color: red;}
+</style>
+</head>
+<body>
+<h1>Dammアルゴリズムのチェックデジットを計算</h1>
+番号を入力して下さい
+<form id="form1" onSubmit="return show();">
+<input type="text" id="basenumber"/>
+<input type="submit" value="計算する" />
+</form>
+</p>
+<div id="result">
+</div>
+Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+<a href="../">すなばに戻る</a>
+</body>
+</html>
