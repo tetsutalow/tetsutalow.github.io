@@ -12,6 +12,7 @@ ga('send', 'pageview');
 <!-- End Google Analytics -->
 <script>
 var pow=[1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,10000000000,100000000000,1000000000000];
+var httpObj = [];
 
 function calcSum(basenumber) {
   var sum = 0;
@@ -38,8 +39,11 @@ function show() {
   
   var result=document.getElementById("result");
   while (result.firstChild) result.removeChild(result.firstChild); // 表示を消す
+  
+  var resultnum = 0; // 結果番号
 
   var t=document.createElement("p"); // メッセージ用
+  t.id = "main";
 
   if (mn<0 || mn>9999999999999) {
 	t.innerHTML = "<b>エラーです。正しい数値を入力して下さい。</b>";
@@ -51,6 +55,18 @@ function show() {
 
   if (isValidCorpnumber(mn)) {
   	t.innerHTML += " は有効です。";
+	var query = 'https://zei.tokyo.jp/cgi-bin/jcntojson?JCN=' + mn;
+	var httpMainObj = new XMLHttpRequest();
+	
+	httpMainObj.open("get", query, true);
+	httpMainObj.onreadystatechange = function() {
+		if (httpMainObj.readyState === 4 & httpMainObj.responseText!=="") {
+			var myData = JSON.parse(httpMainObj.responseText);
+			var t = document.getElementById("main");
+			t.innerHTML += '法人名は「'+myData.name+'」（'+myData.prefecture+myData.city+myData.street+'）です。';
+		}
+	};
+	httpMainObj.send(null);
   }　else {
 	t.innerHTML += " は<b>無効</b>です。検査用数字が一致していません。";
 	result.appendChild(t);
@@ -66,7 +82,7 @@ function show() {
   var base = mn % pow[12];　// 検査用数字を除いた部分
   var cd = Math.floor(mn / pow[12]); // 検査用数字
   var tbl=document.createElement("table");
-  var tr,td;
+  var tr,td,td2;
   
   for (var i=0; i<12; i++) { // 検査用数字を除いて右から順に
   	var left,right; // 着目している桁より左側、右側
@@ -85,14 +101,30 @@ function show() {
   	}
   	for (var j=0; j<10; j++) { // 0から9まで入れ替えてみる
 	  if (j !== tn) { // 同じ数字ならやらない
-		if (isValidCorpnumber(cd*pow[12]+(base2 + j * pow[i]))) { // 数字をjに入れ替えて有効なら
+	    var mn2 = cd*pow[12]+ base2 + j * pow[i];
+		if (isValidCorpnumber(mn2)) { // 数字をjに入れ替えて有効なら
 		  tr = document.createElement("tr");
 		  td = document.createElement("td");
 		  td.innerHTML = String(cd)+ left + "<b>" + String(j) + "</b>" + right ;
+		  td2 = document.createElement("td");
+		  td2.id = "id"+String(mn2);
+		  var query = 'https://zei.tokyo.jp/cgi-bin/jcntojson?JCN=' + mn2;
+		  httpObj[resultnum] = new XMLHttpRequest();
+		  httpObj[resultnum].open("get", query, true);
+		  httpObj[resultnum].onreadystatechange = function() {
+			if (this.readyState === 4 & this.responseText!=="") {
+				var myData = JSON.parse(this.responseText);
+				var t = document.getElementById("id"+myData.jcn);				
+				t.innerHTML += myData.name+'（'+myData.prefecture+myData.city+myData.street+'）';
+			}
+		  };
+		  httpObj[resultnum].send(null);
+		  resultnum++;
 		  tr.appendChild(td);
+		  tr.appendChild(td2);
 		  tbl.appendChild(tr);
 		}
-	  }  		
+  	  }	
   	}
   }
   
@@ -113,7 +145,22 @@ function show() {
 	    tr = document.createElement("tr");
 	    td = document.createElement("td");
 	    td.innerHTML = mn2.substring(0,11-i) + "<b>" + mn2.substring(11-i,13-i) + "</b>" + mn2.substring(13-i,13);
+	    td2 = document.createElement("td");
+	    td2.id = "id"+String(mn2);
+		var query = 'https://zei.tokyo.jp/cgi-bin/jcntojson?JCN=' + mn2;
+		httpObj[resultnum] = new XMLHttpRequest();
+		httpObj[resultnum].open("get", query, true);
+		httpObj[resultnum].onreadystatechange = function() {
+		  if (this.readyState === 4 & this.responseText!=="") {
+			var myData = JSON.parse(this.responseText);
+			var t = document.getElementById("id"+myData.jcn);				
+			t.innerHTML += myData.name+'（'+myData.prefecture+myData.city+myData.street+'）';
+		  }
+		};
+	    httpObj[resultnum].send(null);
+	    resultnum++;
 	    tr.appendChild(td);
+	    tr.appendChild(td2);
 	    tbl.appendChild(tr);
       }
 	}  	
