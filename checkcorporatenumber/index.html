@@ -60,10 +60,15 @@ function show() {
 	
 	httpMainObj.open("get", query, true);
 	httpMainObj.onreadystatechange = function() {
-		if (httpMainObj.readyState === 4 & httpMainObj.responseText!=="") {
-			var myData = JSON.parse(httpMainObj.responseText);
-			var t = document.getElementById("main");
-			t.innerHTML += '法人名は「'+myData.name+'」（'+myData.prefecture+myData.city+myData.street+'）です。';
+		if (httpMainObj.readyState === 4) 
+		    if (httpMainObj.responseText!=="") {
+				var myData = JSON.parse(httpMainObj.responseText);
+				var t = document.getElementById("main");
+				t.innerHTML += '実在の法人に割り当てられており、法人名は「'+myData.name+'」（'+myData.prefecture+myData.city+myData.street+'）です。';
+			} else {
+				t.innerHTML += 'しかし、この番号に割り当てられた法人はないようです。';
+			}
+
 		}
 	};
 	httpMainObj.send(null);
@@ -76,7 +81,7 @@ function show() {
   result.appendChild(t);
 
   t = document.createElement("p");
-  t.innerHTML = "検査用数字が一致する1桁誤りは以下の通りです。";
+  t.innerHTML = "この番号に対し、検査用数字が一致する1桁誤りは以下の通りです。その番号に割り当てられた法人がある場合はそれも表示します。";
   result.appendChild(t);
   
   var base = mn % pow[12];　// 検査用数字を除いた部分
@@ -131,7 +136,7 @@ function show() {
   result.appendChild(tbl);
 
   t = document.createElement("p");
-  t.innerHTML = "検査用数字が一致する2桁入替誤りは以下の通りです。";
+  t.innerHTML = "検査用数字が一致する2桁入替誤りは以下の通りです。その番号に割り当てられた法人がある場合はそれも表示します。";
   result.appendChild(t);
 
   tbl=document.createElement("table");
