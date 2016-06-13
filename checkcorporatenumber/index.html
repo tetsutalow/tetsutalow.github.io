@@ -173,18 +173,35 @@ function show() {
   result.appendChild(tbl);
   return false;
 }
+
+
+function setup() {
+	// クエリ文字列が付いていればparse
+	var hash =  window.location.search.slice(1).split('&');
+	var args = [];
+	for(var i=0; i<hash.length; i++) {
+		var array = hash[i].split('=');
+		args.push(array[0]); // 変数名
+		args[array[0]] = array[1];
+	}
+	if(args["JCN"]) {
+		var t = document.getElementById("cn");
+		t.value = args["JCN"];
+	}
+}
+
 </script>
 <style type="text/css">
 b {color: red;}
 </style>
 </head>
-<body>
+<body onLoad="setup();">
 <h1>法人番号の誤りパターン検索</h1>
 <p>
 法人番号を入力して下さい。法人番号は<a href="http://www.houjin-bangou.nta.go.jp/">国税庁のサイト</a>から検索できます。
-<form id="form1" onSubmit="return show();">
-<input type="text" id="corpnumber"/>
-<input type="submit" valie="検索する" />
+<form id="form1" name="form1" onSubmit="return show();">
+<input type="text" id="cn" name="cn" value=""/>
+<input type="submit" value="検索する" />
 </form>
 </p>
 <div id="result">
