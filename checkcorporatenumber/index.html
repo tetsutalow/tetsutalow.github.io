@@ -185,8 +185,9 @@ function setup() {
 		args[array[0]] = array[1];
 	}
 	if(args["JCN"]) {
-		var t = document.getElementById("cn");
+		var t = document.getElementById("corpnumber");
 		t.value = args["JCN"];
+		show();
 	}
 }
 
@@ -200,7 +201,7 @@ b {color: red;}
 <p>
 法人番号を入力して下さい。法人番号は<a href="http://www.houjin-bangou.nta.go.jp/">国税庁のサイト</a>から検索できます。
 <form id="form1" name="form1" onSubmit="return show();">
-<input type="text" id="cn" name="cn" value=""/>
+<input type="text" id="corpnumber" name="corpnumber"/>
 <input type="submit" value="検索する" />
 </form>
 </p>
