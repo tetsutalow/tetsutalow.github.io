@@ -44,7 +44,7 @@ function show() {
 
   var t=document.createElement("p"); // メッセージ用
 
-  if (mn<0 || mn>999999999999) {
+  if (mn<0 || mn>999999999999 || isNaN(mn)) {
 	t.innerHTML = "<b>エラーです。正しい数値を入力して下さい。</b>";
 	result.appendChild(t);
     return false;
@@ -79,7 +79,7 @@ function show() {
   	if (i === 0) {
   		right = '';
   	} else {
-  		right = ("0000000000" + (base % pow[i])).substr(-i);
+  		right = ("0000000000" + base % pow[i]).substr(-i);
   	}
   	if (i === 10) {
   		left = '';
@@ -135,7 +135,7 @@ b {color: red;}
 <p>
 注：このサイトでは、計算処理は全てブラウザ内で行われますので、
 個人番号含め何を入力してもそのデータがサーバ等に送られることはありません。
-ですが、<b>一般論としてはWebページで個人番号を入力することは危険です</b>のでご注意下さい。<br /><br />
+ですが、<b>一般論としてはWebページで個人番号を入力することは危険です</b>（<a href="http://www.ppc.go.jp/files/pdf/280210_nyuuryoku.pdf">参考：個人情報保護委員会の注意喚起(PDF)</a>）のでご注意下さい。<br /><br />
 個人番号を入力して下さい。
 <form id="form1" onSubmit="return show();">
 <input type="text" id="mynumber"/>
