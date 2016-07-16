@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>テスト用のマイナンバー（個人番号）を生成する。</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+<script>
+var weight=[2,3,4,5,6,7,2,3,4,5,6];
+
+function calcSum(basenumber) {
+  var sum = 0;
+  for (var i=0; i<11; ++i) {
+  	sum += basenumber % 10 * weight[i];
+  	basenumber = Math.floor(basenumber / 10);
+  }
+  return sum;
+}
+
+function calcCheckdigit(basenumber) {
+  var s = calcSum(basenumber) % 11;
+  if (s <= 1)
+  	return 0;
+  return 11 - s;
+}
+
+function isValidMynumber(mynumber) {
+  var c = calcCheckdigit(Math.floor(mynumber / 10));
+  return c === mynumber % 10;
+}
+                                 
+function show() {
+  var num=document.getElementById("num");
+  var n=Math.floor(num.value);
+
+  var result=document.getElementById("result");
+  while (result.firstChild) result.removeChild(result.firstChild); // 表示を消す
+
+  var t=document.createElement("p"); // メッセージ用
+
+  if (n<=0 || n>10000 || isNaN(n)) {
+	t.innerHTML = "<b>エラーです。正しい数値を入力して下さい。</b>";
+	result.appendChild(t);
+    return false;
+  }
+
+  t.innerHTML = "テスト用の個人番号を乱数を用いて" + n + "個生成します。生成された個人番号は実際に使われている可能性がありますので、不用意に公開したり他人に渡したりしないで下さい。";
+  result.appendChild(t);
+
+  var tbl = document.createElement("table");
+  var base, tr, td, cd;
+  
+  for(var i=0; i<n; i++) {
+  	base = Math.floor(Math.random()*100000000000);
+  	cd = calcCheckdigit(base);
+  	tr = document.createElement("tr");
+  	td = document.createElement("td");
+  	td.innerHTML = ("00000000000"+(base*10+cd)).substr(-12);
+  	tr.appendChild(td);
+  	tbl.appendChild(tr);
+  }
+  result.appendChild(tbl);
+  return false;
+}
+</script>
+<style type="text/css">
+b {color: red;}
+</style>
+</head>
+<body>
+<h1>テスト用のマイナンバー（個人番号）を生成する</h1>
+<p>
+マイナンバーを処理するアプリケーションに使えるような、テスト用データを生成します。
+<p>
+※一般に個人番号は法で定められた目的以外では取得は禁じられているので、Webサーバからダウンロード等すると違法行為になりかねませんが、このプログラムではブラウザ内で生成するので取得にあたりません。
+</p>
+<p>
+生成する個人番号の数を入力してください（1～10000）。
+<form id="form1" onSubmit="return show();">
+<input type="text" id="num"/>
+<input type="submit" value="生成する" />
+</form>
+</p>
+<div id="result">
+</div>
+<p>
+Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+<a href="../">すなばに戻る</a>
+</p>
+</body>
+</html>
