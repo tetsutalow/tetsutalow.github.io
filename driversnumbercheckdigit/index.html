@@ -45,11 +45,11 @@ function show() {
   }
   var cd = calcCheckdigit(base);
 
-　if (cd >= 10) {
-	  t.innerHTML = "チェックデジットは0です。";
+　if (cd % 10 === 1) {
+	  t.innerHTML = "チェックデジットは1です。";
   	  t.innerHTML += "計算結果は<b>" + cd + "</b>です。この値を、<a href=\"https://twitter.com/tetsutalow\">TwitterID: @tetsutalow</a>まで教えていただけるととてもうれしいです。ご協力お願いします。";
   } else {
-  	  t.innerHTML = "チェックデジットは" + cd + "です。";
+  	  t.innerHTML = "チェックデジットは" + cd % 10 + "です。";
   }
   result.appendChild(t);
 
@@ -63,8 +63,9 @@ b {color: red;}
 <body>
 <h1>免許証番号におけるチェックデジットを計算</h1>
 <p>
-免許証番号１２ケタのうち、一番右の数字は再発行回数で、右から2番目の数字はチェックデジットですが、これが0の人を探しています。
-もし該当する方は、下記の計算結果が10なのか11なのか、<a href="https://twitter.com/tetsutalow">TwitterID: @tetsutalow</a> までご連絡いただけると嬉しいです。<br>
+<b>※チェックデジットが0の人を探す作戦は終了しました。ご協力ありがとうございました。</b><br />
+免許証番号１２ケタのうち、一番右の数字は再発行回数で、右から2番目の数字はチェックデジットですが、これが1の人を探しています。
+もし該当する方は、下記の計算結果が1なのか11なのか、<a href="https://twitter.com/tetsutalow">TwitterID: @tetsutalow</a> までご連絡いただけると嬉しいです。<br />
 免許証番号のうち、左から10桁を入力して下さい
 <form id="form1" onSubmit="return show();">
 <input type="text" id="basenumber"/>
@@ -74,8 +75,8 @@ b {color: red;}
 <div id="result">
 </div>
 <p>
-背景：mod 11法によるチェックデジットは、上記計算結果が「10」と「11」のうちどちらか一方を附番し、他方をエラーとするのが正しい運用です。
-免許証番号は11となる附番を避けているのかを調べています。
+背景：mod 11法によるチェックデジットは、上記計算結果が「10」と「11」のうち一方を附番し、他方をエラーとするのが正しい運用です。
+ところが免許証番号は11となる附番に1を割り当てているようです。それを調べています。
 </p>
 Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
 <a href="../">すなばに戻る</a>
