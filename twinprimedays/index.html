@@ -47,7 +47,7 @@ function tPrimeDays(year1, year2) {
       days = [31,28,31,30,31, 30,31,31,30,31, 30,31];
     }
     for (var m=1; m<12; m++) 
-      for (var d=1; d<days[m-1]-2; d+=2) {
+      for (var d=1; d<=days[m-1]-2; d+=2) {
       	d1 = y * 10000 + m*100+d;
       	d2 = y * 10000 + m*100+(d+2);
 	      if (isPrime(d1) && isPrime(d2)) {
