@@ -1,94 +1,22 @@
+<!DOCTYPE html>
 <html>
-<head>
-<meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
-<script src="http://js.api.olp.yahooapis.jp/OpenLocalPlatform/V1/jsapi?appid=dj0zaiZpPUhjdXQ1amV2dXhVSSZzPWNvbnN1bWVyc2VjcmV0Jng9Yzg-" type="text/javascript"  charset="UTF-8" ></script>
-
-<title>白地図を表示する</title>
-<script type="text/javascript"> 
-var map;        //YOLP地図オブジェクト（Mapオブジェクト）
-var blankmap;   //白地図レイヤー
-/**
- * window.onloadイベントにて地図の読込処理を行います。
- */
-window.onload = function() {
-    map = new Y.Map("map",{"configure":{"scrollWheelZoom":true}});
-    map.addControl(new Y.LayerSetControl());
-    map.addControl(new Y.SliderZoomControlHorizontal());
-    
-    //白地図レイヤーを作成します。
-    blankmap = new Y.BlankMapLayer();
-    setStyle();
-    //レイヤーセットを作成します。
-    var layerset = new Y.LayerSet("白地図", [blankmap],{"maxZoom":20, "minZoom":11});
-    //Mapオブジェクトにレイヤーセットを追加します。
-    map.addLayerSet("blankmap", layerset);
-    //地図を描画します。
-    map.drawMap(new Y.LatLng(35.6821141786951,139.75630702905684), 11, Y.LayerSetId.NORMAL);
-    //表示を白地図にします。
-    map.setLayerSet( "blankmap" );
-}
-/**
- * スタイルを設定します。
- */
-function setStyle() {
-    var styleobj = document.getElementById("style_onoff");
-    var param = styleobj.value;
-    if(param.indexOf(";") != -1) param="";
-    if(param.indexOf("(") != -1) param="";
-    if(param.indexOf(")") != -1) param="";
-    var style = "";
-    if(param != "") eval("style="+param+";");
-    //スタイルを設定します。
-    blankmap.setStyle(style, true);
-}
-</script>
-<style>
-h1 {
-	font-size:16px;
-	margin:5px;
-	font-weight:bold;
-}
-.sub-menu {
-    margin:4px;
-    padding:4px;
-    border:1px solid;
-}
-h3 {
-    font-size:14px;
-    margin:2px;
-    padding:2px;
-}
-.slapi {
-    width:600px;
-    height:480px;
-}
-.note {
-	color: #ff0000;
-	font-weight: bold;
-	margin:20px 0px;
-}
-.link {
-    margin:5px 0px;
-    font-size:12px;
-}
-.code {
-    width:600px;
-    height:300px;
-    border: 1px solid #000;
-    overflow-y:scroll;
-    font-size: 11px;
-    padding:2px;
-}
-</style>
-</head>
 <body>
-<h1>白地図を表示する</h1>
-<table id="sample">
-<tr>
-    <td class="left" valign="top">
-        <div id="map" style="width:600px; height:480px"></div>
-    </td>
-</tr>
-</table>
-</body> 
-</html> 
+<div id="map" style="width:400px; height:300px"></div>
+
+<script src="http://js.api.olp.yahooapis.jp/OpenLocalPlatform/V1/jsapi?appid=dj0zaiZpPUhjdXQ1amV2dXhVSSZzPWNvbnN1bWVyc2VjcmV0Jng9Yzg-" type="text/javascript"  charset="UTF-8" ></script>
+<script type="text/javascript">
+var ymap;
+var blankmap;
+window.onload = function(){
+    ymap = new Y.Map("map");
+    blankmap = new Y.BlankMapLayer();
+    var layerset = new Y.LayerSet("白地図", [blankmap],{"maxZoom":20, "minZoom":1});
+    //Mapオブジェクトにレイヤーセットを追加します。
+    ymap.addLayerSet("blankmap", layerset);
+    ymap.drawMap(new Y.LatLng(35.66572, 139.73100), 17, Y.LayerSetId.NORMAL);
+    ymap.setLayerSet( "blankmap" );
+}
+
+</script>
+</body>
+</html>
