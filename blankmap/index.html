@@ -1,22 +1,159 @@
-<!DOCTYPE html>
 <html>
-<body>
-<div id="map" style="width:400px; height:300px"></div>
-
+<head>
+<meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
 <script src="http://js.api.olp.yahooapis.jp/OpenLocalPlatform/V1/jsapi?appid=dj0zaiZpPUhjdXQ1amV2dXhVSSZzPWNvbnN1bWVyc2VjcmV0Jng9Yzg-" type="text/javascript"  charset="UTF-8" ></script>
-<script type="text/javascript">
-var ymap;
-var blankmap;
-window.onload = function(){
-    ymap = new Y.Map("map");
+
+<title>白地図を表示する</title>
+<script type="text/javascript"> 
+var map;        //YOLP地図オブジェクト（Mapオブジェクト）
+var blankmap;   //白地図レイヤー
+/**
+ * window.onloadイベントにて地図の読込処理を行います。
+ */
+window.onload = function() {
+    map = new Y.Map("map",{"configure":{"scrollWheelZoom":true}});
+    map.addControl(new Y.LayerSetControl());
+    map.addControl(new Y.SliderZoomControlHorizontal());
+    
+    //白地図レイヤーを作成します。
     blankmap = new Y.BlankMapLayer();
-    var layerset = new Y.LayerSet("白地図", [blankmap],{"maxZoom":20, "minZoom":1});
+    setStyle();
+    //レイヤーセットを作成します。
+    var layerset = new Y.LayerSet("白地図", [blankmap],{"maxZoom":20, "minZoom":5});
     //Mapオブジェクトにレイヤーセットを追加します。
-    ymap.addLayerSet("blankmap", layerset);
-    ymap.drawMap(new Y.LatLng(35.66572, 139.73100), 17, Y.LayerSetId.NORMAL);
-    ymap.setLayerSet( "blankmap" );
+    map.addLayerSet("blankmap", layerset);
+    //地図を描画します。
+    map.drawMap(new Y.LatLng(35.6821141786951,139.75630702905684), 11, Y.LayerSetId.NORMAL);
+    //表示を白地図にします。
+    map.setLayerSet( "blankmap" );
+}
+/**
+ * スタイルを設定します。
+ */
+function setStyle() {
+    var style = {
+  "area" : {
+    "default" : "dcdcdc"
+    ,"01222" : "ff0000"
+,"01303" : "f00"
+,"01304" : "f00"
+,"01396" : "f00"
+,"01402" : "f00"
+,"01406" : "f00"
+,"01485" : "f00"
+,"01607" : "f00"
+,"02424" : "f00"
+,"02441" : "f00"
+,"04211" : "f00"
+,"04214" : "f00"
+,"05212" : "f00"
+,"05346" : "f00"
+,"05463" : "f00"
+,"06341" : "f00"
+,"06361" : "f00"
+,"06362" : "f00"
+,"07209" : "f00"
+,"07322" : "f00"
+,"07445" : "f00"
+,"07542" : "f00"
+,"08309" : "f00"
+,"11348" : "f00"
+,"13307" : "f00"
+,"13363" : "f00"
+,"13381" : "f00"
+,"13382" : "f00"
+,"13401" : "f00"
+,"13402" : "f00"
+,"18481" : "f00"
+,"19204" : "f00"
+,"19205" : "f00"
+,"19365" : "f00"
+,"19443" : "f00"
+,"20407" : "f00"
+,"21302" : "f00"
+,"21421" : "f00"
+,"22342" : "f00"
+,"23562" : "f00"
+,"25384" : "f00"
+,"26303" : "f00"
+,"31325" : "f00"
+,"32343" : "f00"
+,"35305" : "f00"
+,"38484" : "f00"
+,"39302" : "f00"
+,"39303" : "f00"
+,"40448" : "f00"
+,"43348" : "f00"
+,"43425" : "f00"
+,"43428" : "f00"
+,"43511" : "f00"
+,"44206" : "f00"
+,"45341" : "f00"
+,"45421" : "f00"
+,"46221" : "f00"
+,"46525" : "f00"
+,"47308" : "f00"
+,"47348" : "f00"
+,"47353" : "f00"
+,"47354" : "f00"
+,"47356" : "f00"
+,"47382" : "f00"
+  },
+  "label" : {
+    "default" : "696969"
+  },
+  "border" : {
+    "default" : "aaa"
+  },
+  "bg" : "b0c4de"
+};
+    //スタイルを設定します。
+    blankmap.setStyle(style, true);
+}
+</script>
+<style>
+h1 {
+	font-size:16px;
+	margin:5px;
+	font-weight:bold;
+}
+.sub-menu {
+    margin:4px;
+    padding:4px;
+    border:1px solid;
+}
+h3 {
+    font-size:14px;
+    margin:2px;
+    padding:2px;
+}
+.slapi {
+    width:1024px;
+    height:768px;
+}
+.note {
+	color: #ff0000;
+	font-weight: bold;
+	margin:20px 0px;
+}
+.link {
+    margin:5px 0px;
+    font-size:12px;
+}
+.code {
+    width:600px;
+    height:300px;
+    border: 1px solid #000;
+    overflow-y:scroll;
+    font-size: 11px;
+    padding:2px;
 }
 
-</script>
-</body>
-</html>
+</style>
+</head>
+<body>
+<h1>白地図を表示する</h1>
+<div id="map" style="width:1200px; height:720px"></div>
+</table>
+</body> 
+</html> 
