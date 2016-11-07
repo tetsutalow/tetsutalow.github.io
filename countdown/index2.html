@@ -24,13 +24,13 @@ function update() {
   	t1.innerHTML = "提出！お疲れさまでした！";	
   } else {
   	var s = (r1 % (60*1000)) / 1000;
-	t1.innerHTML = Math.floor(r1 / oneday) + '日' + ('0'+Math.floor((r1 % oneday) / (60*60*1000))).substr(-2)+ ":" + ("0"+Math.floor(r1 % (60*60*1000) / (60*1000))).substr(-2) + ":" + (s<10 ? "0" : "") + s;	
+	t1.innerHTML = Math.floor(r1 / oneday) + '日' + ('0'+Math.floor((r1 % oneday) / (60*60*1000))).substr(-2)+ "時間" + ("0"+Math.floor(r1 % (60*60*1000) / (60*1000))).substr(-2) + "分" + (s<10 ? "0" : "") + Math.floor(s) +"秒";	
   }
   if (r2 <= 0) {
   	t2.innerHTML = "提出！お疲れさまでした！";	
   } else {
   	var s = (r1 % (60*1000)) / 1000;
-	t2.innerHTML = Math.floor(r2 / oneday) + '日' + ('0'+Math.floor((r2 % oneday) / (60*60*1000))).substr(-2)+ ":" + ("0"+Math.floor(r2 % (60*60*1000) / (60*1000))).substr(-2) + ":" + (s<10 ? "0" : "") + s;	
+	t2.innerHTML = Math.floor(r2 / oneday) + '日' + ('0'+Math.floor((r2 % oneday) / (60*60*1000))).substr(-2)+ "時間" + ("0"+Math.floor(r2 % (60*60*1000) / (60*1000))).substr(-2) + "分" + (s<10 ? "0" : "") + Math.floor(s)+"秒";	
   }
 }
                          
@@ -40,11 +40,15 @@ function setup() {
   d1 = new Date(2017,0,30,17);
   t2=document.getElementById("m2"); // 修論
   d2 = new Date("2017-02-03T17:00:00+09:00");
-　timer = setInterval('update()', 1);
+　timer = setInterval('update()', 200);
 }
 
 </script>
 <style type="text/css">
+body {
+	background-color: black;
+	color: white;
+}
 b {
 	color: red;
 	font-size: 80pt;
@@ -70,7 +74,7 @@ b {
 　
 </b>
 <p>
-重すぎる場合は<a href="index2.html">こちら</a>. <br />
+もっと緊張感が欲しいときは<a href="index.html">こちら</a>.<br />
 Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
 <a href="../">すなばに戻る</a>
 </p>
