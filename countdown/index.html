@@ -20,10 +20,21 @@ function update() {
   var d = new Date();
   var r1 = new Date(d1-d);
   var r2 = new Date(d2-d);
-  t1.innerHTML = Math.floor(r1 / oneday) + '日' + Math.floor((r1 % oneday) / (60*60*1000))+ ":" + Math.floor(r1 % (60*60*1000) / (60*1000)) + ":" + (r1 % (60 * 1000))/1000  ;	
-  t2.innerHTML = Math.floor(r2 / oneday) + '日' + Math.floor((r2 % oneday) / (60*60*1000))+ ":" + Math.floor(r2 % (60*60*1000) / (60*1000)) + ":" + (r2 % (60 * 1000))/1000  ;	
+  if (r1 <= 0) {
+  	t1.innerHTML = "提出！お疲れさまでした！";	
+  } else {
+  	var s = (r1 % (60*1000)) / 1000;
+	t1.innerHTML = Math.floor(r1 / oneday) + '日' + ('0'+Math.floor((r1 % oneday) / (60*60*1000))).substr(-2)+ ":" + ("0"+Math.floor(r1 % (60*60*1000) / (60*1000))).substr(-2) + ":" + (s<10 ? "0" : "") + s;	
+  }
+  if (r2 <= 0) {
+  	t2.innerHTML = "提出！お疲れさまでした！";	
+  } else {
+  	var s = (r1 % (60*1000)) / 1000;
+	t2.innerHTML = Math.floor(r2 / oneday) + '日' + ('0'+Math.floor((r2 % oneday) / (60*60*1000))).substr(-2)+ ":" + ("0"+Math.floor(r2 % (60*60*1000) / (60*1000))).substr(-2) + ":" + (s<10 ? "0" : "") + s;	
+  }
 }
-                             
+                         
+
 function setup() {
   t1=document.getElementById("b4"); // 卒論
   d1 = new Date(2017,0,30,17);
