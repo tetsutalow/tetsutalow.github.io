@@ -15,14 +15,14 @@ var primes=[];
 
 function setUp() {
   var f=[];
-  for (var i=0; 2*i+3<1000000; ++i)
+  for (var i=0; 2*i+3<10000000; ++i)
     f.push(true);
   primes.push(2);
-  for (var i=0; 2*i+3<1000000; ++i) {
+  for (var i=0; 2*i+3<10000000; ++i) {
     if (f[i]) {
       var p=2*i+3;
       primes.push(p);
-      for (var j=i+p; 2*j+3<1000000; j+=p)
+      for (var j=i+p; 2*j+3<10000000; j+=p)
         f[j]=false;
     }
   }
@@ -40,9 +40,11 @@ function isPrime(n) {
 function PrimeSeconds(y,m,d) {
   var ret=[];
   var s1;
+  var base = (y*10000 + m*100 + d)*1000000+101;
+  
   for (var h=0; h<=23; h++) {
     for (var min=0; min<=59; min++) {
-      for (var s=0; s<=59; s++) {
+      for (var s=1; s<=59; s+=2) {
         s1 = (y * 10000 + m*100+d)*1000000 + h * 10000 + min*100+s;
 	    if (isPrime(s1)) {
 	    	ret.push(s1);
