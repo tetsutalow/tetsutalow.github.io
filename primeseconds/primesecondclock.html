@@ -21,6 +21,14 @@ var nextprime;
 
 function setup() {
   var f=[];
+
+  t1=document.getElementById("now"); // 現時刻
+  t1c=document.getElementById("nowc"); // 現時刻の下のコメント
+  t2=document.getElementById("next"); // 次回の素数秒
+  t2c=document.getElementById("nextc"); // 素数秒の下のコメント
+  t1.innerHTML = toLocaleString(d); // 現在時刻
+
+  var d = new Date();
   for (var i=0; 2*i+3<10000000; ++i)
     f.push(true);
   primes.push(2);
@@ -32,15 +40,10 @@ function setup() {
         f[j]=false;
     }
   }
-  t1=document.getElementById("now"); // 現時刻
-  t1c=document.getElementById("nowc"); // 現時刻の下のコメント
-  t2=document.getElementById("next"); // 次回の素数秒
-  t2c=document.getElementById("nextc"); // 素数秒の下のコメント
   var d = new Date();
   intd = toSecondString(d);
   fact = factorization(intd);
   nextprime = nextPrimeSecond(d); // 次回の素数秒の取得
-  t1.innerHTML = toLocaleString(d); // 現在時刻
   t2.innerHTML = toLocaleString(nextprime);
   t2c.innerHTML = toSecondString(nextprime) + "は素数";
   timer = setInterval('update()', 250);
@@ -133,6 +136,8 @@ function nextPrimeSecond(date) { // dateはDate()の値
 
 function update() {
   var d = new Date();
+  t1.innerHTML = toLocaleString(d); // 現在時刻
+
   var newintd = toSecondString(d);
   if (newintd != intd) { // 秒が変わった
   	intd = newintd;
@@ -143,7 +148,6 @@ function update() {
   		t1.style.color = "blue";
   	}
   }
-  t1.innerHTML = toLocaleString(d); // 現在時刻
   t1c.innerHTML = intd + ":" + fact;
   if (d>nextprime) {
 	nextprime = nextPrimeSecond(d); // 次回の素数秒の取得
@@ -162,7 +166,6 @@ body {
 	color: black;
 }
 b {
-	color: blue;
 	font-size: 50pt;
 }
 </style>
