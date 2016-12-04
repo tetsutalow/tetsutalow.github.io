@@ -1,0 +1,104 @@
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>素数秒を探す</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+<script>
+var primes=[];
+
+function setUp() {
+  var f=[];
+  for (var i=0; 2*i+3<1000000; ++i)
+    f.push(true);
+  primes.push(2);
+  for (var i=0; 2*i+3<1000000; ++i) {
+    if (f[i]) {
+      var p=2*i+3;
+      primes.push(p);
+      for (var j=i+p; 2*j+3<1000000; j+=p)
+        f[j]=false;
+    }
+  }
+}
+
+function isPrime(n) {
+  var l = Math.sqrt(n) + 1;
+  for (var i=0; i<primes.length && primes[i] <= l; ++i) {
+    if (n%primes[i]===0)
+      return false;
+  }
+  return true;
+}
+
+function PrimeSeconds(y,m,d) {
+  var ret=[];
+  var s1;
+  for (var h=0; h<=23; h++) {
+    for (var min=0; min<=59; min++) {
+      for (var s=0; s<=59; s++) {
+        s1 = (y * 10000 + m*100+d)*1000000 + h * 10000 + min*100+s;
+	    if (isPrime(s1)) {
+	    	ret.push(s1);
+        }
+      }d
+  	}
+  }
+  return ret;
+}
+                                 
+function show() {
+  var yr=document.getElementById("year");
+  var mo=document.getElementById("mon");
+  var da=document.getElementById("day");
+  var y=+yr.value;
+  var m=+mo.value;
+  var d=+da.value;
+  if (y<1 || y>9999 || m<1 || m>12 || d<1 || d>31) {
+    alert("Error: 入力値が不正です");
+    return false;
+  }
+  setUp();
+  var result=document.getElementById("result");
+  while (result.firstChild) result.removeChild(result.firstChild);
+  var tpds=PrimeSeconds(y,m,d);
+  var tbl=document.createElement("table");
+  for (var i=0; i<tpds.length; ++i) {
+    var tr=document.createElement("tr");
+    var td=document.createElement("td");
+    td.innerHTML=tpds[i];
+    tr.appendChild(td);
+    tbl.appendChild(tr);
+  }
+  var t=document.createElement("p");
+  t.innerHTML="Prime seconds on "+[y,m,d].join("/")+":";
+  result.appendChild(t);
+  result.appendChild(tbl);
+  return false;
+}
+</script>
+</head>
+<body>
+<h1>素数秒の検索</h1>
+日付と時刻を12桁の数字で表したときに素数になる秒を「素数秒」と呼ぶことにして、ある日の素数秒を探すプログラムです。
+<p>
+検索する日を入力して下さい (1-9999)
+<form id="form1" onSubmit="return show();">
+年 <input type="text" id="year"/>
+月 <input type="text" id="mon"/>
+日 <input type="text" id="day"/>
+<input type="submit" />
+</form>
+</p>
+<div id="result">
+</div>
+</body>
+Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+<a href="../">すなばに戻る</a>
+</html>

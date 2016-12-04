@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>素数秒時計</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+
+<script>
+var t1,t1c,t2,t2c,timer;
+var intd,fact; // dの「秒」表現とその素因数分解したもの 
+var primes=[];
+var nextprime;
+
+
+function setup() {
+  var f=[];
+  for (var i=0; 2*i+3<10000000; ++i)
+    f.push(true);
+  primes.push(2);
+  for (var i=0; 2*i+3<10000000; ++i) {
+    if (f[i]) {
+      var p=2*i+3;
+      primes.push(p);
+      for (var j=i+p; 2*j+3<10000000; j+=p)
+        f[j]=false;
+    }
+  }
+  t1=document.getElementById("now"); // 現時刻
+  t1c=document.getElementById("nowc"); // 現時刻の下のコメント
+  t2=document.getElementById("next"); // 次回の素数秒
+  t2c=document.getElementById("nextc"); // 素数秒の下のコメント
+  var d = new Date();
+  intd = toSecondString(d);
+  fact = factorization(intd);
+  nextprime = nextPrimeSecond(d); // 次回の素数秒の取得
+  t1.innerHTML = toLocaleString(d); // 現在時刻
+  t2.innerHTML = toLocaleString(nextprime);
+  t2c.innerHTML = toSecondString(nextprime) + "は素数";
+  timer = setInterval('update()', 250);
+}
+
+function isPrime(n) {
+  var l = Math.sqrt(n) + 1;
+  for (var i=0; i<primes.length && primes[i] <= l; ++i) {
+    if (n%primes[i]===0)
+      return false;
+  }
+  return true;
+}
+
+function factorization( f )
+{
+	var result = "";
+	var p = Math.floor(f);
+	if (p<2)
+		return "ERROR";
+	var l = Math.sqrt(p)+1;
+	for(var i=0; i<primes.length && primes[i]<=l; ++i) {
+		if (p%primes[i] == 0) {
+			var j=0;
+			do {
+				p = p / primes[i];
+				result += " " + primes[i];
+				j++;
+			} while (p%primes[i] == 0);
+		}
+	}
+	if (p > 1) {
+		result += ' ' + p;
+	}
+	return result;
+}
+
+function toLocaleString( date )
+{
+  return [
+    date.getFullYear(),
+    ('0'+(date.getMonth() + 1)).slice(-2),
+    ('0'+date.getDate()).slice(-2)
+  ].join('/') + ' ' +
+  [
+    ('0'+date.getHours()).slice(-2),
+    ('0'+date.getMinutes()).slice(-2),
+    ('0'+date.getSeconds()).slice(-2)
+  ].join(':');
+}
+
+function toSecondString( date )
+{
+  return (
+    date.getFullYear()+
+    ('0'+(date.getMonth() + 1)).slice(-2)+
+    ('0'+date.getDate()).slice(-2)+
+    ('0'+date.getHours()).slice(-2)+
+    ('0'+date.getMinutes()).slice(-2)+
+    ('0'+date.getSeconds()).slice(-2)
+  );
+}
+
+function nextPrimeSecond(date) { // dateはDate()の値
+  var y,m,d,h,min,s,today;
+  y = date.getFullYear();
+  m = date.getMonth() + 1;
+  d = date.getDate();
+  h = date.getHours();
+  min = date.getMinutes();
+  s = date.getSeconds();
+  today = (y*10000+m*100+d)*1000000;
+  for (var i=h; i<=23; i++) {
+  	for (var j=0; j<=59; j++) {
+  	  if (i==h && j<min) {
+  	    j=min;
+  	  }
+  	  for (var k=0; k<=59; k++) {
+  	  	if (i==h && j==min && k<s) {
+  	  	  k=s;
+  	  	}
+  	  	if (isPrime(today+i*10000+j*100+k)) {
+  	  	   return(new Date(y,m-1,d,i,j,k));
+  	  	}
+  	  }
+  	}
+  }
+  return nextPrimeSecond(new Date(y,m-1,d+1)); // 翌日を探す
+}
+
+function update() {
+  var d = new Date();
+  var newintd = toSecondString(d);
+  if (newintd != intd) { // 秒が変わった
+  	intd = newintd;
+  	fact = factorization(intd);
+  	if (intd == toSecondString(nextprime)) {
+  		t1.style.color = "red";
+  	} else {
+  		t1.style.color = "blue";
+  	}
+  }
+  t1.innerHTML = toLocaleString(d); // 現在時刻
+  t1c.innerHTML = intd + ":" + fact;
+  if (d>nextprime) {
+	nextprime = nextPrimeSecond(d); // 次回の素数秒の取得
+    t2.innerHTML = toLocaleString(nextprime);
+    t2c.innerHTML = toSecondString(nextprime) + "は素数";
+  }
+}
+                         
+
+
+
+</script>
+<style type="text/css">
+body {
+	background-color: white;
+	color: black;
+}
+b {
+	color: blue;
+	font-size: 50pt;
+}
+</style>
+</head>
+<body onload="setup();">
+<h1>素数秒時計</h1>
+<p>
+現在の時刻
+</p>
+<b id="now">
+　
+</b>
+<p id="nowc">
+</p>
+<p>
+次の素数秒
+</p>
+<b id="next">
+　
+</b>
+<p id="nextc">
+</p>
+<p id="nextprime">
+</p>
+<p>
+Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+<a href="../">すなばに戻る</a>
+</p>
+</body>
+</html>
