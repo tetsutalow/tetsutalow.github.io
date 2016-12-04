@@ -23,13 +23,15 @@ function setup() {
   var f=[];
 
   t1=document.getElementById("now"); // 現時刻
+  t1.style.color = "blue";
   t1c=document.getElementById("nowc"); // 現時刻の下のコメント
   t2=document.getElementById("next"); // 次回の素数秒
   t2c=document.getElementById("nextc"); // 素数秒の下のコメント
+ 
+  var d = new Date();
   t1.innerHTML = toLocaleString(d); // 現在時刻
 
-  var d = new Date();
-  for (var i=0; 2*i+3<10000000; ++i)
+ for (var i=0; 2*i+3<10000000; ++i)
     f.push(true);
   primes.push(2);
   for (var i=0; 2*i+3<10000000; ++i) {
