@@ -40,16 +40,50 @@ function isPrime(n) {
 function PrimeSeconds(y,m,d) {
   var ret=[];
   var s1;
-  var base = (y*10000 + m*100 + d)*1000000+101;
+  var base = (y * 10000 + m*100+d)*1000000;
+  var f=[];
+  var ff=[];
+  var fff=[];
+  var h,min,s;
   
-  for (var h=0; h<=23; h++) {
-    for (var min=0; min<=59; min++) {
-      for (var s=1; s<=59; s+=2) {
-        s1 = (y * 10000 + m*100+d)*1000000 + h * 10000 + min*100+s;
-	    if (isPrime(s1)) {
-	    	ret.push(s1);
+  // 変則エラトステネスのふるいをする
+  
+  // 初期化
+  for (h=0; h<=23; h++) {
+  	ff=new Array();
+  	for (min=0; min<=59; min++) {
+  		fff=new Array();
+  		for (s=0; s<=59; s++) {
+  			fff[s]=true;
+  		}
+  		ff[min]=fff;
+  	}
+  	f[h]=ff;
+  }
+
+  for (i=0; i<primes.length && base+235959 >= primes[i]*primes[i]; i++) {
+  	for (h=0; h<=23; h++) {
+  		for (min=0; min<=59; min++) {
+			var t=(base + h*10000+min*100) % primes[i];
+			if (t==0) {
+				f[h][min][0]=false;
+			}
+  			s = primes[i]-t;
+  			while(s<60) {
+  				f[h][min][s]=false;
+				s+=primes[i];
+  			}
+  		}
+  	}
+  }
+  
+  for (h=0; h<=23; h++) {
+    for (min=0; min<=59; min++) {
+      for (s=0; s<=59; s++) {
+	    if (f[h][min][s]) {
+	    	ret.push(base+h*10000+min*100+s);
         }
-      }d
+      }
   	}
   }
   return ret;
@@ -92,7 +126,7 @@ function show() {
 </script>
 </head>
 <body>
-<h1>素数秒の検索(個別素数判定版)</h1>
+<h1>素数秒の検索(変則エラトステネスのふるい版)</h1>
 日付と時刻を12桁の数字で表したときに素数になる秒を「素数秒」と呼ぶことにして、ある日の素数秒を探すプログラムです。
 <p>
 検索する日を入力して下さい
