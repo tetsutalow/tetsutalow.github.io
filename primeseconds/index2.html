@@ -15,6 +15,7 @@ var primes=[];
 
 function setUp() {
   var f=[];
+  primes=[];
   for (var i=0; 2*i+3<10000000; ++i)
     f.push(true);
   primes.push(2);
@@ -26,6 +27,16 @@ function setUp() {
         f[j]=false;
     }
   }
+}
+
+function Init() {
+  var yr=document.getElementById("year");
+  var mo=document.getElementById("mon");
+  var da=document.getElementById("day");
+  var d=new Date();
+  yr.value = d.getFullYear();
+  mo.value = d.getMonth()+1;
+  da.value = d.getDate();
 }
 
 function isPrime(n) {
@@ -96,14 +107,20 @@ function show() {
   var y=+yr.value;
   var m=+mo.value;
   var d=+da.value;
-  if (y<1 || y>9999 || m<1 || m>12 || d<1 || d>31) {
+  var days=[];
+  if ( (y % 400 == 0) || (y % 100 != 0) && (y % 4 == 0) ) { 
+    days = [31,29,31,30,31, 30,31,31,30,31, 30,31];
+  } else {
+    days = [31,28,31,30,31, 30,31,31,30,31, 30,31];
+  }
+  if (y<1 || y>9999 || m<1 || m>12 || d<1 || d>days[m-1]) {
     alert("Error: 入力値が不正です");
     return false;
   }
-  var starttime = new Date(); 
-  setUp();
   var result=document.getElementById("result");
   while (result.firstChild) result.removeChild(result.firstChild);
+  var starttime = new Date(); 
+  setUp();
   var tpds=PrimeSeconds(y,m,d);
   var tbl=document.createElement("table");
   for (var i=0; i<tpds.length; ++i) {
@@ -125,15 +142,15 @@ function show() {
 }
 </script>
 </head>
-<body>
-<h1>素数秒の検索(変則エラトステネスのふるい版)</h1>
+<body onload="Init();">
+<h1>素数秒の検索(区間エラトステネスのふるい版)</h1>
 日付と時刻を12桁の数字で表したときに素数になる秒を「素数秒」と呼ぶことにして、ある日の素数秒を探すプログラムです。
 <p>
 検索する日を入力して下さい
 <form id="form1" onSubmit="return show();">
-年 <input type="text" id="year"/>
-月 <input type="text" id="mon"/>
-日 <input type="text" id="day"/>
+<input type="text" id="year" size=4 />年 
+<input type="text" id="mon" size=3  />月 
+<input type="text" id="day" size=3 />日 
 <input type="submit" />
 </form>
 </p>
