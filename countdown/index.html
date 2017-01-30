@@ -29,7 +29,7 @@ function update() {
   if (r2 <= 0) {
   	t2.innerHTML = "提出！お疲れさまでした！";	
   } else {
-  	var s = (r1 % (60*1000)) / 1000;
+  	var s = (r2 % (60*1000)) / 1000;
 	t2.innerHTML = Math.floor(r2 / oneday) + '日' + ('0'+Math.floor((r2 % oneday) / (60*60*1000))).substr(-2)+ ":" + ("0"+Math.floor(r2 % (60*60*1000) / (60*1000))).substr(-2) + ":" + (s<10 ? "0" : "") + s;	
   }
 }
