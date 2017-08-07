@@ -13,7 +13,7 @@ ga('send', 'pageview');
 <!-- End Google Analytics -->
 
 <script>
-var t1,t1c,t2,t2c,timer;
+var t1,t1c,t2,t2c;
 var intd,fact; // dの「秒」表現とその素因数分解したもの 
 var primes=[];
 var nextprime;
@@ -34,7 +34,7 @@ function setup() {
  for (var i=0; 2*i+3<10000000; ++i)
     f.push(true);
   primes.push(2);
-  for (var i=0; 2*i+3<10000000; ++i) {
+  for (i=0; 2*i+3<10000000; ++i) {
     if (f[i]) {
       var p=2*i+3;
       primes.push(p);
@@ -42,7 +42,7 @@ function setup() {
         f[j]=false;
     }
   }
-  var d = new Date();
+  d = new Date();
   intd = toSecondString(d);
   fact = factorization(intd);
   nextprime = nextPrimeSecond(d); // 次回の素数秒の取得
@@ -63,22 +63,32 @@ function isPrime(n) {
 function factorization( f )
 {
 	var result = "";
+	var first = true;
 	var p = Math.floor(f);
 	if (p<2)
 		return "ERROR";
 	var l = Math.sqrt(p)+1;
 	for(var i=0; i<primes.length && primes[i]<=l; ++i) {
-		if (p%primes[i] == 0) {
+		if (p%primes[i] === 0) {
 			var j=0;
 			do {
 				p = p / primes[i];
-				result += " " + primes[i];
+				if (first) {
+					result += primes[i];
+					first = false;
+				} else {
+					result += " x " + primes[i];
+				}
 				j++;
-			} while (p%primes[i] == 0);
+			} while (p%primes[i] === 0);
 		}
 	}
 	if (p > 1) {
-		result += ' ' + p;
+		if (first) {
+			result += p;
+		} else {
+			result += " x " + p;
+		}
 	}
 	return result;
 }
@@ -150,7 +160,7 @@ function update() {
   		t1.style.color = "blue";
   	}
   }
-  t1c.innerHTML = intd + ":" + fact;
+  t1c.innerHTML = intd + " = " + fact;
   if (d>nextprime) {
 	nextprime = nextPrimeSecond(d); // 次回の素数秒の取得
     t2.innerHTML = toLocaleString(nextprime);
