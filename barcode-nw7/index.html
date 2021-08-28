@@ -56,8 +56,9 @@ html, body, #wrapper {
         document.getElementById("title").innerHTML = title;
         document.getElementById("htmltitle").innerHTML = title;
 
-        var bwidth = Math.floor(codewidth / (data.length * 22));
+        var bwidth = Math.floor(codewidth / (data.length * 24));
         bwidth = (bwidth > maxw) ? maxw : bwidth;
+        bwidth = (bwidth > 0) ? bwidth : 1;
 
         JsBarcode("#barcode",data, {width: bwidth, height: bheight, text: caption});
         var i=document.getElementById("input");
