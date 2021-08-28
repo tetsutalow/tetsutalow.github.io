@@ -10,9 +10,23 @@ ga('send', 'pageview');
 </script>
 <script async src='//www.google-analytics.com/analytics.js'></script>
 <!-- End Google Analytics -->
-<!-- For JsBarcode-->
+
 <style type="text/css">
 b {color: red;}
+p.title {
+    font-size: x-large;
+}
+* {
+    margin: 0;
+    padding: 0;
+}
+#canvas {
+    display: block;
+}
+html, body, #wrapper {
+    width: 100%;
+    height: 100%;
+}
 </style>
 </head>
 <body onLoad="setup();">
@@ -20,13 +34,34 @@ b {color: red;}
 
     <script>
     function show() {
-      var data=document.getElementById("DATA").value;
-      
+        var codewidth = document.getElementById("wrapper").offsetWidth;
+        var data = String(document.getElementById("DATA").value);
+        var maxw = parseInt(document.getElementById("MAXW").value);
+        var bheight = parseInt(document.getElementById("BHEIGHT").value);
+        var title = String(document.getElementById("TITLE").value);
+        var caption = document.getElementById("NOCAPTION").checked ? ' ' : data;
+        var dataexp = new RegExp(/^[0-9$:/.+-]+$/);
+        var codeexp = new RegExp(/^[A-D][0-9$:/.+-]+[A-D]$/);
+        var t = document.getElementById("err");
+        
+        if (data.match(codeexp) === null) {
+            if (data.match(dataexp) === null) {
+                t.innerHTML = "正しいデータを入力して下さい";
+                return false;
+            } else {
+                data = 'A' + data + 'A'; // デフォルトでAをつける
+            }
+        }
     
-      JsBarcode("#barcode",data);
-      var i=document.getElementById("input");
-      while (i.firstChild) i.removeChild(i.firstChild); // 表示を消す
-    return false;
+        document.getElementById("title").innerHTML = title;
+
+        var bwidth = Math.floor(codewidth / (data.length * 11));
+        bwidth = (bwidth > maxw) ? maxw : bwidth;
+
+        JsBarcode("#barcode",data, {width: bwidth, height: bheight, text: caption});
+        var i=document.getElementById("input");
+        while (i.firstChild) i.removeChild(i.firstChild); // 表示を消す
+        return false;
     }
     
     
@@ -37,6 +72,18 @@ b {color: red;}
         for(var i=0; i<hash.length; i++) {
             var array = hash[i].split('=');
             args[array[0]] = array[1];
+        }
+        if(args["MAXW"]) {
+            document.getElementById("MAXW").value = args["MAXW"];
+        }
+        if(args["BHEIGHT"]) {
+            document.getElementById("BHEIGHT").value = args["BHEIGHT"];
+        }
+        if(args["TITLE"]) {
+            document.getElementById("TITLE").value = args["TITLE"];
+        }
+        if(args["NOCAPTION"]) {
+            document.getElementById("NOCAPTION").checked = true;
         }
         if(args["DATA"]) {
             var t = document.getElementById("DATA");
@@ -51,11 +98,19 @@ b {color: red;}
 <p>
 NW-7で表示するデータを入力して下さい。
 <form id="form1" name="form1" onSubmit="return show();">
-<input type="text" id="DATA" name="DATA"/>
+データ(DATA)<input type="text" id="DATA" name="DATA"/><br>
+バーの最大基本幅(MAXW)<input type="text" id="MAXW" name="MAXW" size=2 value="5"/><br>
+バーの高さ(BHEIGHT)<input type="text" id="BHEIGHT" name="BHEIGHT" size=3 value="100"/><br>
+タイトル(TITLE)<input type="text" id="TITLE" name="TITLE"/><br>
+データをバーコード下に表示しない(NOCAPTION) <input type="checkbox" id="NOCAPTION" name="NOCAPTION"><br>
 <input type="submit" value="バーコード表示" />
 </form>
+<b id="err"></b>
 </p>
 </div>
-<canvas id="barcode"></canvas>
+<div id="wrapper" align="center">
+    <p id="title" class="title"></p> 
+    <canvas id="barcode"></canvas>
+</div>
 </body>
 </html>
