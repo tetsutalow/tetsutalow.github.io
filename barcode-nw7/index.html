@@ -80,7 +80,7 @@ html, body, #wrapper {
             document.getElementById("BHEIGHT").value = args["BHEIGHT"];
         }
         if(args["TITLE"]) {
-            document.getElementById("TITLE").value = args["TITLE"];
+            document.getElementById("TITLE").value = decodeURIComponent(args["TITLE"]);
         }
         if(args["NOCAPTION"]) {
             document.getElementById("NOCAPTION").checked = true;
