@@ -1,7 +1,7 @@
 <html>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <head>
-<title>NW-7で表示</title>
+<title id="htmltitle">NW-7で表示</title>
 <!-- Google Analytics -->
 <script>
 window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
@@ -35,7 +35,7 @@ html, body, #wrapper {
     <script>
     function show() {
         var codewidth = document.getElementById("wrapper").offsetWidth;
-        var data = String(document.getElementById("DATA").value);
+        var data = String(decodeURIComponent(document.getElementById("DATA").value));
         var maxw = parseInt(document.getElementById("MAXW").value);
         var bheight = parseInt(document.getElementById("BHEIGHT").value);
         var title = String(document.getElementById("TITLE").value);
@@ -54,6 +54,7 @@ html, body, #wrapper {
         }
     
         document.getElementById("title").innerHTML = title;
+        document.getElementById("htmltitle").innerHTML = title;
 
         var bwidth = Math.floor(codewidth / (data.length * 11));
         bwidth = (bwidth > maxw) ? maxw : bwidth;
