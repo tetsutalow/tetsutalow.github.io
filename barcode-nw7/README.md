@@ -14,16 +14,15 @@ Narrow Barのピクセル幅を調整していますが、あまり大きくな�
 ## 使用例
 
 https://tetsutalow.github.io/barcode-nw7/?DATA=12345678
-
-![image](https://user-images.githubusercontent.com/10404440/131203432-58a5fe90-3125-407a-9ad4-bf46c88e241e.png)
+![image](https://user-images.githubusercontent.com/10404440/131297956-1e479a68-eceb-49a5-81cf-a09d0b3e239a.png)
 
 https://tetsutalow.github.io/barcode-nw7/?DATA=A06-1234-5678B&TITLE=電話番号&MAXW=3
 
-![image](https://user-images.githubusercontent.com/10404440/131204786-27d86b50-200a-4db3-9f10-b8b37b898f8a.png)
+![image](https://user-images.githubusercontent.com/10404440/131298053-83467454-8380-464f-bafa-20b5eeef1852.png)
 
 https://tetsutalow.github.io/barcode-nw7/?DATA=0032&TITLE=%E5%8F%97%E4%BB%98%E7%95%AA%E5%8F%B7&MAXW=7&BHEIGHT=150&NOCAPTION=1
 
-![image](https://user-images.githubusercontent.com/10404440/131204907-9d1a3fb8-59ff-4b13-84e9-1413d55b8f1b.png)
+![image](https://user-images.githubusercontent.com/10404440/131298122-5d7f2916-ff37-4d15-84de-379b05cc3b94.png)
 
 URLパラメータのDATAがない場合は手動でバーコードを作るフォーム画面が表示されます。
 
