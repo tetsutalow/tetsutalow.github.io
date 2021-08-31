@@ -1,0 +1,40 @@
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title>入構許可リストを作る</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+<script>
+
+function setup() {
+    let day = new Date();
+    let result = document.getElementById("result");
+
+    day.setDate(day.getDate() + 6 - day.getDay()); // 土曜日
+
+    for (let i=0; i<7; i++) {
+        result.innerHTML += new Intl.DateTimeFormat('ja-JP', {dateStyle: 'full'}).format(day) + " 8:00～12:00<br>";
+        result.innerHTML += new Intl.DateTimeFormat('ja-JP', {dateStyle: 'full'}).format(day) + " 12:00～22:00<br>";
+        day.setDate(day.getDate()+1);
+    }
+    return false;
+}
+</script>
+<style type="text/css">
+b {color: red;}
+</style>
+</head>
+<body onload="setup();">
+    <h1>入構許可リストを作る</h1>
+    <p id="result">
+    </p>
+    Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
+    <a href="../">すなばに戻る</a>
+</body>
+</html>
