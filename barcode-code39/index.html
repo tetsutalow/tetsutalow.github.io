@@ -1,0 +1,134 @@
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<head>
+<title id="htmltitle">Code39で表示</title>
+<!-- Google Analytics -->
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-75328966-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+39&family=Libre+Barcode+39+Text&display=swap');
+</style>
+<style type="text/css">
+b {color: red;}
+p.title {
+    font-size: x-large;
+}
+* {
+    margin: 0;
+    padding: 0;
+}
+#canvas {
+    display: block;
+}
+html, body, #wrapper {
+    width: 100%;
+    height: 100%;
+}
+.barcode {
+    font-family: "Libre Barcode 39";
+    font-size: 200px;
+    white-space: nowrap;
+}
+.barcode-text {
+    font-family: "Libre Barcode 39 Text";
+    font-size: 200px;
+    white-space: nowrap;
+}
+</style>
+</head>
+<body onLoad="setup();">
+    <script src='./JsBarcode.codabar.min.js'></script>
+
+    <script>
+    function show() {
+        var codewidth = document.getElementById("wrapper").offsetWidth;
+        var data = String(decodeURIComponent(document.getElementById("DATA").value));
+        var maxw = parseInt(document.getElementById("MAXW").value);
+        var bheight = parseInt(document.getElementById("BHEIGHT").value);
+        var title = String(document.getElementById("TITLE").value);
+        var caption = document.getElementById("NOCAPTION").checked ? ' ' : data;
+        var dataexp = new RegExp(/^[0-9A-Z. $/+%-]+$/);
+        var codeexp = new RegExp(/^\*[0-9A-Z. $/+%-]+\*$/);
+        var t = document.getElementById("err");
+        
+        if (data.match(codeexp) === null) {
+            if (data.match(dataexp) === null) {
+                t.innerHTML = "正しいデータを入力して下さい";
+                return false;
+            } else {
+                data = '*' + data + '*'; // デフォルトで*をつける
+            }
+        }
+    
+        document.getElementById("title").innerHTML = title;
+        document.getElementById("htmltitle").innerHTML = title;
+
+        var barcode = document.getElementById("barcode-text");
+        if (document.getElementById("NOCAPTION").checked) {
+            barcode = document.getElementById("barcode");
+        }
+        barcode.innerHTML = data;
+        var datawidth = barcode.offsetWidth;
+        barcode.style.fontSize = String(200*(codewidth/datawidth)*0.95)+'px';
+
+//        JsBarcode("#barcode",data, {width: bwidth, height: bheight, text: caption});
+        var i=document.getElementById("input");
+        while (i.firstChild) i.removeChild(i.firstChild); // 表示を消す
+        return false;
+    }
+    
+    
+    function setup() {
+        // クエリ文字列が付いていればparse
+        var hash =  window.location.search.slice(1).split('&');
+        var args = [];
+        for(var i=0; i<hash.length; i++) {
+            var array = hash[i].split('=');
+            args[array[0]] = array[1];
+        }
+        if(args["MAXW"]) {
+            document.getElementById("MAXW").value = args["MAXW"];
+        }
+        if(args["BHEIGHT"]) {
+            document.getElementById("BHEIGHT").value = args["BHEIGHT"];
+        }
+        if(args["TITLE"]) {
+            document.getElementById("TITLE").value = decodeURIComponent(args["TITLE"]);
+        }
+        if(args["NOCAPTION"]) {
+            document.getElementById("NOCAPTION").checked = true;
+        }
+        if(args["DATA"]) {
+            var t = document.getElementById("DATA");
+            t.value = args["DATA"];
+            show();
+        }
+    }
+    
+    </script>
+<div id="input">
+<h1>バーコードで表示</h1>
+<p>
+Code39で表示するデータを入力して下さい。
+<form id="form1" name="form1" onSubmit="return show();">
+データ(DATA)<input type="text" id="DATA" name="DATA"/><br>
+バーの最大基本幅(MAXW)<input type="text" id="MAXW" name="MAXW" size=2 value="5"/><br>
+バーの高さ(BHEIGHT)<input type="text" id="BHEIGHT" name="BHEIGHT" size=3 value="200"/><br>
+タイトル(TITLE)<input type="text" id="TITLE" name="TITLE"/><br>
+データをバーコード下に表示しない(NOCAPTION) <input type="checkbox" id="NOCAPTION" name="NOCAPTION"><br>
+<input type="submit" value="バーコード表示" />
+</form>
+<b id="err"></b>
+</p>
+</div>
+<div id="wrapper" align="center">
+    <p id="title" class="title"></p> 
+    <span id="barcode-text" class="barcode-text"></span>
+</div>
+</body>
+</html>
