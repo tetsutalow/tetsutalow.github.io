@@ -112,7 +112,7 @@ function show() {
 		  td.innerHTML = String(cd)+ left + "<b>" + String(j) + "</b>" + right ;
 		  td2 = document.createElement("td");
 		  td2.id = "id"+String(mn2);
-		  var query = 'https://typegame.cysec-lab.org/cgi-bin/jcntojson?JCN=' + mn2;
+		  var query = 'https://zei.tokyo.jp/cgi-bin/jcntojson?JCN=' + mn2;
 		  httpObj[resultnum] = new XMLHttpRequest();
 		  httpObj[resultnum].open("get", query, true);
 		  httpObj[resultnum].onreadystatechange = function() {
@@ -207,7 +207,7 @@ b {color: red;}
 <div id="result">
 </div>
 <p>
-このサービスは、<a href="http://www.houjin-bangou.nta.go.jp/webapi/">国税庁法人番号システムのWeb-API機能</a>を利用して取得した情報をもとに作成しました。<br />
+このサービスは、<a href="https://www.houjin-bangou.nta.go.jp/webapi/">国税庁法人番号システムのWeb-API機能</a>を利用して取得した情報をもとに作成しました。<br />
 Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
 <a href="../">すなばに戻る</a>
 </p>
