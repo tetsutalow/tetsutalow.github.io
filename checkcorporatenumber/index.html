@@ -55,7 +55,7 @@ function show() {
 
   if (isValidCorpnumber(mn)) {
   	t.innerHTML += " は有効です。";
-	var query = 'https://typegame.cysec-lab.org/cgi-bin/jcntojson?JCN=' + mn;
+	var query = 'https://zei.tokyo.jp/cgi-bin/jcntojson?JCN=' + mn;
 	var httpMainObj = new XMLHttpRequest();
 	
 	httpMainObj.open("get", query, true);
