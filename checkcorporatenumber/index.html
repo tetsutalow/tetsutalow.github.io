@@ -55,7 +55,7 @@ function show() {
 
   if (isValidCorpnumber(mn)) {
   	t.innerHTML += " は有効です。";
-	var query = 'https://uso.pyon.com/cgi-bin/jcntojson?JCN=' + mn;
+	var query = 'https://vps.tetsutaro.jp/cgi-bin/jcntojson?JCN=' + mn;
 	var httpMainObj = new XMLHttpRequest();
 	
 	httpMainObj.open("get", query, true);
@@ -112,7 +112,7 @@ function show() {
 		  td.innerHTML = String(cd)+ left + "<b>" + String(j) + "</b>" + right ;
 		  td2 = document.createElement("td");
 		  td2.id = "id"+String(mn2);
-		  var query = 'https://uso.pyon.com/cgi-bin/jcntojson?JCN=' + mn2;
+		  var query = 'https://vps.tetsutaro.jp/cgi-bin/jcntojson?JCN=' + mn2;
 		  httpObj[resultnum] = new XMLHttpRequest();
 		  httpObj[resultnum].open("get", query, true);
 		  httpObj[resultnum].onreadystatechange = function() {
@@ -151,7 +151,7 @@ function show() {
 	    td.innerHTML = mn2.substring(0,11-i) + "<b>" + mn2.substring(11-i,13-i) + "</b>" + mn2.substring(13-i,13);
 	    td2 = document.createElement("td");
 	    td2.id = "id"+String(mn2);
-		var query = 'https://uso.pyon.com/cgi-bin/jcntojson?JCN=' + mn2;
+		var query = 'https://vps.tetsutaro.jp/cgi-bin/jcntojson?JCN=' + mn2;
 		httpObj[resultnum] = new XMLHttpRequest();
 		httpObj[resultnum].open("get", query, true);
 		httpObj[resultnum].onreadystatechange = function() {
