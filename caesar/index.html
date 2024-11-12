@@ -26,24 +26,12 @@ function caesarEncrypt(str, shift) {
     }).join('');
 }
 
-function displayAllShifts(str) {
-    for (let shift = 1; shift <= 25; shift++) {
-        console.log(`Shift ${shift}: ${caesarEncrypt(str, shift)}`);
-    }
-}
-
 function show() {
   var plaintext=document.getElementById("plaintext").value;
   var result=document.getElementById("result");
   while (result.firstChild) result.removeChild(result.firstChild); // 表示を消す
 
   var t=document.createElement("p"); // メッセージ用
-
-//  if (base<0 || base>9999999999) {
-//	t.innerHTML = "<b>エラーです。正しい数値を入力して下さい。</b>";
-//	result.appendChild(t);
-//    return false;
-//  }
 
   t.innerHTML = "平文" + plaintext + "に対して全てのCaesar暗号を求めます。<br />";
   for (let shift = 1; shift <= 25; shift++) {
@@ -70,8 +58,7 @@ b {color: red;}
 <div id="result">
 </div>
 <p>
-背景：mod 11法によるチェックデジットは、数字だけ使う場合は、11通りの計算結果のうち10通りを残し、1通りについてはエラーとする（付番しない）のが正しい運用です。
-ところが免許証番号は上記計算式から、1が2通り割り当てられているようです。よって、1桁の入力誤りや、隣接する2桁の順番を入れ替えてしまう誤りなどが検出できない場合があります。
+英字(A-Z, a-z)の範囲だけ暗号化しています。
 </p>
 Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
 <a href="../">すなばに戻る</a>
