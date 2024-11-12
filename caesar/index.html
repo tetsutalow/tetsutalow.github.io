@@ -49,7 +49,7 @@ function setup() {
 	var args = [];
 	for(var i=0; i<hash.length; i++) {
 		var array = hash[i].split('=');
-		args[array[0]] = array[1];
+		args[array[0]] = decodeURIComponent(array[1]);
 	}
 	if(args["TEXT"]) {
 		var t = document.getElementById("plaintext");
