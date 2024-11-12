@@ -47,7 +47,7 @@ function show() {
 
   t.innerHTML = "平文" + plaintext + "に対して全てのCaesar暗号を求めます。<br />";
   for (let shift = 1; shift <= 25; shift++) {
-    t.innerHTML += "鍵" + shift + ": " + caesarCipher(plaintext, shift) + "<br />";
+    t.innerHTML += "鍵" + shift + ": " + caesarEncrypt(plaintext, shift) + "<br />";
   }
     
   result.appendChild(t);
