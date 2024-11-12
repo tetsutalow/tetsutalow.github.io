@@ -26,6 +26,7 @@ function caesarEncrypt(str, shift) {
     }).join('');
 }
 
+    
 function show() {
   var plaintext=document.getElementById("plaintext").value;
   var result=document.getElementById("result");
@@ -41,12 +42,28 @@ function show() {
   result.appendChild(t);
   return false;
 }
+
+function setup() {
+	// クエリ文字列が付いていればparse
+	var hash =  window.location.search.slice(1).split('&');
+	var args = [];
+	for(var i=0; i<hash.length; i++) {
+		var array = hash[i].split('=');
+		args[array[0]] = array[1];
+	}
+	if(args["TEXT"]) {
+		var t = document.getElementById("plaintext");
+		t.value = args["TEXT"];
+		show();
+	}
+}
+
 </script>
 <style type="text/css">
 b {color: red;}
 </style>
 </head>
-<body>
+<body onLoad="setup();">
 <h1>シーザー(Caesar)暗号のデモ</h1>
 <p>
 平文を入力して下さい
