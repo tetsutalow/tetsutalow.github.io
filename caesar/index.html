@@ -11,12 +11,16 @@ ga('send', 'pageview');
 <script async src='//www.google-analytics.com/analytics.js'></script>
 <!-- End Google Analytics -->
 <script>
-function caesarCipher(str, shift) {
+function caesarEncrypt(str, shift) {
     return str.split('').map(char => {
-        if (char.match(/[a-z]/i)) {
-            let code = char.charCodeAt(0);
-            let base = (code >= 65 && code <= 90) ? 65 : 97;
-            return String.fromCharCode(((code - base + shift) % 26) + base);
+        const code = char.charCodeAt(0);
+        // 大文字の範囲
+        if (code >= 65 && code <= 90) {
+            return String.fromCharCode(((code - 65 + shift) % 26) + 65);
+        }
+        // 小文字の範囲
+        if (code >= 97 && code <= 122) {
+            return String.fromCharCode(((code - 97 + shift) % 26) + 97);
         }
         return char;
     }).join('');
@@ -24,7 +28,7 @@ function caesarCipher(str, shift) {
 
 function displayAllShifts(str) {
     for (let shift = 1; shift <= 25; shift++) {
-        console.log(`Shift ${shift}: ${caesarCipher(str, shift)}`);
+        console.log(`Shift ${shift}: ${caesarEncrypt(str, shift)}`);
     }
 }
 
