@@ -6,7 +6,7 @@
     <title>Digital Countdown</title>
     <style>
         /* Google Fontsからデジタル風フォントを読み込む */
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press Start 2P&display=swap');
 
         body {
             background-color: #0c0c1e; /* 深い夜空のような紺色 */
@@ -16,7 +16,7 @@
             align-items: center;
             height: 100vh;
             color: #e0e0e0;
-            font-family: 'Orbitron', sans-serif; /* デジタル風フォントを適用 */
+            font-family: 'Press Start 2P', sans-serif; /* デジタル風フォントを適用 */
             overflow: hidden;
         }
 
@@ -44,8 +44,8 @@
 
         h1 {
             font-size: 2.5rem;
-            color: #4d94ff; /* 明るい青色 */
-            text-shadow: 0 0 10px #4d94ff, 0 0 20px #4d94ff; /* ネオンのような発光効果 */
+            color: #ff7900; /* 明るい赤色 */
+            text-shadow: 0 0 10px #ff7900, 0 0 20px #ff7900; /* ネオンのような発光効果 */
             margin-bottom: 1rem;
         }
 
@@ -205,7 +205,7 @@
             if (parseInt(minutes2El.innerText) !== minutes2) flipElement(minutes2El, minutes2);
             if (parseInt(seconds2El.innerText) !== seconds2) flipElement(seconds2El, seconds2);
             
-        }, 100);
+        }, 500);
         
         // アニメーションを適用し、テキストを更新する関数
         function flipElement(element, value) {
@@ -213,7 +213,7 @@
             setTimeout(() => {
                 element.innerText = String(value).padStart(2, '0');
                 element.classList.remove('flip');
-            }, 500); // アニメーションの時間と合わせる
+            }, 300); // アニメーションの時間と合わせる
         }
         
         // --- 背景パーティクルアニメーション ---
