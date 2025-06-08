@@ -54,6 +54,11 @@
             justify-content: center;
             gap: 1rem; /* 各ユニット間の隙間 */
         }
+        #countdown2 {
+            display: flex;
+            justify-content: center;
+            gap: 1rem; /* 各ユニット間の隙間 */
+        }
 
         .time-unit {
             perspective: 500px; /* 3Dアニメーションのための視点 */
@@ -150,8 +155,8 @@
 
     <script>
         // --- 目標の日時を設定 ---
-        const targetDate = new Date(”2025-08-01T17:00:00”); // 卒論の〆切
-        const targetDate2 = new Date(”2025-07-31T17:00:00”); // 卒論の〆切
+        const targetDate = new Date("2025-08-01T17:00:00"); // 卒論の〆切
+        const targetDate2 = new Date("2025-07-31T17:00:00"); // 修論の〆切
 
         const daysEl = document.getElementById('days');
         const hoursEl = document.getElementById('hours');
@@ -195,12 +200,12 @@
             if (parseInt(hoursEl.innerText) !== hours) flipElement(hoursEl, hours);
             if (parseInt(minutesEl.innerText) !== minutes) flipElement(minutesEl, minutes);
             if (parseInt(secondsEl.innerText) !== seconds) flipElement(secondsEl, seconds);
-            if (parseInt(days2El.innerText) !== days) flipElement(daysEl, days2);
-            if (parseInt(hours2El.innerText) !== hours) flipElement(hoursEl, hours2);
-            if (parseInt(minutes2El.innerText) !== minutes) flipElement(minutesEl, minutes2);
-            if (parseInt(seconds2El.innerText) !== seconds) flipElement(secondsEl, seconds2);
+            if (parseInt(days2El.innerText) !== days2) flipElement(days2El, days2);
+            if (parseInt(hours2El.innerText) !== hours2) flipElement(hours2El, hours2);
+            if (parseInt(minutes2El.innerText) !== minutes2) flipElement(minutes2El, minutes2);
+            if (parseInt(seconds2El.innerText) !== seconds2) flipElement(seconds2El, seconds2);
             
-        }, 1000);
+        }, 100);
         
         // アニメーションを適用し、テキストを更新する関数
         function flipElement(element, value) {
