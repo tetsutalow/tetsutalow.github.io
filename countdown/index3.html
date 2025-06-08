@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Countdown</title>
+    <style>
+        /* Google Fontsからデジタル風フォントを読み込む */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+
+        body {
+            background-color: #0c0c1e; /* 深い夜空のような紺色 */
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #e0e0e0;
+            font-family: 'Orbitron', sans-serif; /* デジタル風フォントを適用 */
+            overflow: hidden;
+        }
+
+        /* 背景アニメーション用のキャンバス */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* コンテンツの背面に配置 */
+        }
+
+        /* コンテンツ全体を囲むコンテナ */
+        .container {
+            position: relative;
+            z-index: 2; /* キャンバスより手前に配置 */
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2rem 4rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px); /* 背景をぼかすすりガラス効果 */
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #4d94ff; /* 明るい青色 */
+            text-shadow: 0 0 10px #4d94ff, 0 0 20px #4d94ff; /* ネオンのような発光効果 */
+            margin-bottom: 1rem;
+        }
+
+        #countdown {
+            display: flex;
+            justify-content: center;
+            gap: 1rem; /* 各ユニット間の隙間 */
+        }
+
+        .time-unit {
+            perspective: 500px; /* 3Dアニメーションのための視点 */
+        }
+
+        .number {
+            font-size: 4rem;
+            line-height: 1;
+            padding: 1rem;
+            background-color: rgba(10, 20, 40, 0.5);
+            border-radius: 10px;
+            color: #fff;
+            text-shadow: 0 0 8px #fff;
+            transition: transform 0.5s ease-in-out;
+            transform-style: preserve-3d; /* 3D変形を維持 */
+        }
+        
+        /* 数字が更新される瞬間に適用されるアニメーションクラス */
+        .number.flip {
+           animation: flip-anim 0.5s ease-in-out;
+        }
+
+        .label {
+            font-size: 1rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        /* --- アニメーションの定義 --- */
+
+        /* 数字が縦に反転するキーフレーム */
+        @keyframes flip-anim {
+            0% {
+                transform: rotateX(0deg);
+            }
+            50% {
+                transform: rotateX(180deg);
+                color: #4d94ff; /* 反転中に色を変える */
+            }
+            100% {
+                transform: rotateX(360deg);
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 背景アニメーション用のキャンバス -->
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="container">
+        <h1>Towards Deadline</h1>
+        <H2>For Guraduation Thesis</H2>
+        <div id="countdown">
+            <div class="time-unit">
+                <div id="days" class="number">00</div>
+                <div class="label">Days</div>
+            </div>
+            <div class="time-unit">
+                <div id="hours" class="number">00</div>
+                <div class="label">Hours</div>
+            </div>
+            <div class="time-unit">
+                <div id="minutes" class="number">00</div>
+                <div class="label">Minutes</div>
+            </div>
+            <div class="time-unit">
+                <div id="seconds" class="number">00</div>
+                <div class="label">Seconds</div>
+            </div>
+        </div>
+        <H2>For Master Thesis</H2>
+        <div id="countdown2">
+            <div class="time-unit">
+                <div id="days2" class="number">00</div>
+                <div class="label">Days</div>
+            </div>
+            <div class="time-unit">
+                <div id="hours2" class="number">00</div>
+                <div class="label">Hours</div>
+            </div>
+            <div class="time-unit">
+                <div id="minutes2" class="number">00</div>
+                <div class="label">Minutes</div>
+            </div>
+            <div class="time-unit">
+                <div id="seconds2" class="number">00</div>
+                <div class="label">Seconds</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 目標の日時を設定 ---
+        const targetDate = new Date(”2025-08-01T17:00:00”); // 卒論の〆切
+        const targetDate2 = new Date(”2025-07-31T17:00:00”); // 卒論の〆切
+
+        const daysEl = document.getElementById('days');
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+
+        const days2El = document.getElementById('days2');
+        const hours2El = document.getElementById('hours2');
+        const minutes2El = document.getElementById('minutes2');
+        const seconds2El = document.getElementById('seconds2');
+
+        // カウントダウン処理
+        const countdownInterval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = targetDate.getTime() - now;
+            const distance2 = targetDate2.getTime() - now;
+
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                document.getElementById('countdown').innerHTML = "<h1>DEADLINE!</h1>";
+                return;
+            }
+
+            if (distance2 < 0) {
+                clearInterval(countdownInterval);
+                document.getElementById('countdown2').innerHTML = "<h1>DEADLINE!</h1>";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            const days2 = Math.floor(distance2 / (1000 * 60 * 60 * 24));
+            const hours2 = Math.floor((distance2 % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes2 = Math.floor((distance2 % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds2 = Math.floor((distance2 % (1000 * 60)) / 1000);
+            
+            // 値が変わった時だけアニメーションを適用
+            if (parseInt(daysEl.innerText) !== days) flipElement(daysEl, days);
+            if (parseInt(hoursEl.innerText) !== hours) flipElement(hoursEl, hours);
+            if (parseInt(minutesEl.innerText) !== minutes) flipElement(minutesEl, minutes);
+            if (parseInt(secondsEl.innerText) !== seconds) flipElement(secondsEl, seconds);
+            if (parseInt(days2El.innerText) !== days) flipElement(daysEl, days2);
+            if (parseInt(hours2El.innerText) !== hours) flipElement(hoursEl, hours2);
+            if (parseInt(minutes2El.innerText) !== minutes) flipElement(minutesEl, minutes2);
+            if (parseInt(seconds2El.innerText) !== seconds) flipElement(secondsEl, seconds2);
+            
+        }, 1000);
+        
+        // アニメーションを適用し、テキストを更新する関数
+        function flipElement(element, value) {
+            element.classList.add('flip');
+            setTimeout(() => {
+                element.innerText = String(value).padStart(2, '0');
+                element.classList.remove('flip');
+            }, 500); // アニメーションの時間と合わせる
+        }
+        
+        // --- 背景パーティクルアニメーション ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray;
+
+        // パーティクルのプロパティ
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+            // 描画
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            // 位置を更新
+            update() {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        // パーティクルを初期化
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 0.5;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * .4) - .2;
+                let directionY = (Math.random() * .4) - .2;
+                let color = 'rgba(255, 255, 255, 0.8)';
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+        
+        // アニメーションループ
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+        }
+        
+        init();
+        animate();
+        
+        // ウィンドウサイズが変わったらリサイズ
+        window.addEventListener('resize', () => {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+
+    </script>
+
+</body>
+</html>
