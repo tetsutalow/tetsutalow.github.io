@@ -72,14 +72,14 @@
             border-radius: 10px;
             color: #fff;
             text-shadow: 0 0 8px #fff;
-            transition: transform 0.9s ease-in-out;
-            animation: flip-in-anim .15s ease-in-out;
+   //         transition: flip-out-anim .5s ease-in-out;
+            animation: flip-in-anim .2s ease-in-out;
             transform-style: preserve-3d; /* 3D変形を維持 */
         }
         
         /* 数字が更新される瞬間に適用されるアニメーションクラス: 反転して消える */
         .number.flip-out {
-           animation: flip-out-anim .3s ease-in-out;
+           animation: flip-out-anim .4s ease-in-out;
         }
 
         .label {
@@ -219,11 +219,11 @@
         
         // アニメーションを適用し、テキストを更新する関数
         function flipElement(element, value) {
-            element.classList.add('flip-out');
+           element.classList.add('flip-out');
             setTimeout(() => {
-                element.classList.remove('flip-out');
                 element.innerText = String(value).padStart(2, '0');
-            }, 250); // アニメーションの時間と合わせる
+                element.classList.remove('flip-out');
+            }, 350); // アニメーションの時間と合わせる
         }
         
         // --- 背景パーティクルアニメーション ---
