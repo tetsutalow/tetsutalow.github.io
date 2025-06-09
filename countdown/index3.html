@@ -72,13 +72,14 @@
             border-radius: 10px;
             color: #fff;
             text-shadow: 0 0 8px #fff;
-            transition: transform 0.5s ease-in-out;
+            transition: transform 0.9s ease-in-out;
+            animation: flip-in-anim .15s ease-in-out;
             transform-style: preserve-3d; /* 3D変形を維持 */
         }
         
-        /* 数字が更新される瞬間に適用されるアニメーションクラス */
-        .number.flip {
-           animation: flip-anim 0.5s ease-in-out;
+        /* 数字が更新される瞬間に適用されるアニメーションクラス: 反転して消える */
+        .number.flip-out {
+           animation: flip-out-anim .3s ease-in-out;
         }
 
         .label {
@@ -90,14 +91,23 @@
         
         /* --- アニメーションの定義 --- */
 
-        /* 数字が縦に反転するキーフレーム */
-        @keyframes flip-anim {
+        /* 数字が縦に反転してから消えるキーフレーム */
+        @keyframes flip-out-anim {
             0% {
                 transform: rotateX(0deg);
             }
-            50% {
+            66% {
                 transform: rotateX(180deg);
                 color: #4d94ff; /* 反転中に色を変える */
+            }
+            100% {
+                transform: rotateX(270deg);
+            }
+        }
+        /* 数字が現れるキーフレーム */
+        @keyframes flip-in-anim {
+            0% {
+                transform: rotateX(270deg);
             }
             100% {
                 transform: rotateX(360deg);
@@ -205,15 +215,15 @@
             if (parseInt(minutes2El.innerText) !== minutes2) flipElement(minutes2El, minutes2);
             if (parseInt(seconds2El.innerText) !== seconds2) flipElement(seconds2El, seconds2);
             
-        }, 500);
+        }, 1000);
         
         // アニメーションを適用し、テキストを更新する関数
         function flipElement(element, value) {
-            element.classList.add('flip');
+            element.classList.add('flip-out');
             setTimeout(() => {
+                element.classList.remove('flip-out');
                 element.innerText = String(value).padStart(2, '0');
-                element.classList.remove('flip');
-            }, 300); // アニメーションの時間と合わせる
+            }, 250); // アニメーションの時間と合わせる
         }
         
         // --- 背景パーティクルアニメーション ---
@@ -258,13 +268,14 @@
         // パーティクルを初期化
         function init() {
             particlesArray = [];
+            speed = 10;
             let numberOfParticles = (canvas.height * canvas.width) / 9000;
             for (let i = 0; i < numberOfParticles; i++) {
                 let size = (Math.random() * 2) + 0.5;
                 let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
                 let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
-                let directionX = (Math.random() * .4) - .2;
-                let directionY = (Math.random() * .4) - .2;
+                let directionX = (Math.random() * speed) - speed/2;
+                let directionY = (Math.random() * speed) - speed/2;
                 let color = 'rgba(255, 255, 255, 0.8)';
                 particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
             }
