@@ -156,8 +156,14 @@ function update() {
   	fact = factorization(intd);
   	if (intd == toSecondString(nextprime)) {
   		t1.style.color = "red";
+  		t1.classList.add("prime-moment");
+  		// 素数秒の瞬間のエフェクト
+  		setTimeout(function() {
+  			t1.classList.remove("prime-moment");
+  		}, 2000);
   	} else {
   		t1.style.color = "blue";
+  		t1.classList.remove("prime-moment");
   	}
   }
   t1c.innerHTML = intd + " = " + fact;
@@ -173,38 +179,287 @@ function update() {
 
 </script>
 <style type="text/css">
-body {
-	background-color: white;
-	color: black;
+/* Google Fontsから未来的なフォント「Orbitron」と等幅フォント「JetBrains Mono」をインポート */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+/* 全体のリセットCSS - ページ全体の余白を削除 */
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
 }
+
+/* メインボディのスタイル - サイバーパンク風のダークテーマ */
+body {
+	/* 暗い色調のグラデーション背景（黒→紺色→青系） */
+	background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+	color: #ffffff; /* 白文字 */
+	font-family: 'Orbitron', monospace; /* SF映画風フォント */
+	min-height: 100vh; /* 画面全体の高さ */
+	display: flex; /* フレックスボックスレイアウト */
+	flex-direction: column; /* 縦方向に配置 */
+	align-items: center; /* 中央揃え */
+	justify-content: center; /* 縦方向も中央揃え */
+	overflow-x: hidden; /* 横スクロールを隠す */
+	position: relative; /* 子要素の絶対配置の基準 */
+}
+
+/* 背景に浮かぶ光の効果を作る疑似要素 */
+body::before {
+	content: '';
+	position: fixed; /* 画面に固定 */
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	/* 複数の円形グラデーションで幻想的な光を演出 */
+	background: 
+		radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+		radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+		radial-gradient(circle at 40% 80%, rgba(120, 200, 255, 0.3) 0%, transparent 50%);
+	z-index: -1; /* 背景として配置 */
+	animation: pulse 4s ease-in-out infinite alternate; /* ゆっくりと明滅 */
+}
+
+/* 背景の光が明滅するアニメーション */
+@keyframes pulse {
+	0% { opacity: 0.5; } /* 薄く */
+	100% { opacity: 0.8; } /* 濃く */
+}
+
+/* メインタイトル「素数秒時計」のスタイル */
+h1 {
+	font-size: 2.5em; /* 大きなフォントサイズ */
+	font-weight: 900; /* 最も太い文字 */
+	text-align: center; /* 中央揃え */
+	margin-bottom: .5em; /* 下に余白 */
+	/* レインボーグラデーション */
+	background: linear-gradient(45deg, #00f5ff, #ff00ff, #ffff00);
+	-webkit-background-clip: text; /* テキストにグラデーションを適用 */
+	-webkit-text-fill-color: transparent; /* 文字を透明にしてグラデーションを見せる */
+	background-clip: text;
+	text-shadow: 0 0 30px rgba(0, 245, 255, 0.5); /* 光るエフェクト */
+	animation: glow 2s ease-in-out infinite alternate; /* 光が強弱する */
+}
+
+/* タイトルの光るエフェクトアニメーション */
+@keyframes glow {
+	from { text-shadow: 0 0 20px rgba(0, 245, 255, 0.5); }
+	to { text-shadow: 0 0 40px rgba(0, 245, 255, 0.8), 0 0 60px rgba(255, 0, 255, 0.5); }
+}
+
+/* 時計を囲む半透明のコンテナ（ガラスモーフィズム風） */
+.clock-container {
+	background: rgba(0, 0, 0, 0.4); /* 半透明の黒背景 */
+	backdrop-filter: blur(10px); /* 背景をぼかす */
+	border: 2px solid rgba(0, 245, 255, 0.3); /* シアン色の薄い境界線 */
+	border-radius: 20px; /* 角を丸く */
+	padding: 2em; /* 内側の余白 */
+	margin: 1em; /* 外側の余白 */
+	/* 複数の影効果で立体感を演出 */
+	box-shadow: 
+		0 8px 32px rgba(0, 0, 0, 0.3), /* 外側の影 */
+		inset 0 1px 0 rgba(255, 255, 255, 0.1), /* 内側のハイライト */
+		0 0 20px rgba(0, 245, 255, 0.1); /* 周囲の光 */
+	position: relative; /* 疑似要素の基準 */
+	overflow: hidden; /* 内容がはみ出さないように */
+}
+
+/* コンテナ内部の薄いグラデーション背景 */
+.clock-container::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	/* 非常に薄いグラデーション（文字の視認性を保つため） */
+	background: linear-gradient(135deg, 
+		rgba(0, 245, 255, 0.05) 0%, 
+		rgba(255, 0, 255, 0.03) 50%, 
+		rgba(255, 255, 0, 0.05) 100%);
+	border-radius: 18px;
+	z-index: -1; /* 背景として配置 */
+}
+
+/* 時刻ラベル（「現在の時刻」「次の素数秒」）のスタイル */
+.time-label {
+	font-size: 1.2em;
+	font-weight: 400;
+	margin-bottom: 0.5em;
+	color: #00f5ff; /* シアン色 */
+	text-transform: uppercase; /* 大文字に変換 */
+	letter-spacing: 2px; /* 文字間隔を広く */
+}
+
+/* 時刻表示部分（太字のb要素）のスタイル */
 b {
-	font-size: 50pt;
+	font-size: 3em; /* 大きなフォントサイズ */
+	font-weight: 800; /* 太い文字（Rubik Dirtに合わせて調整） */
+	display: block; /* ブロック要素として表示 */
+	text-align: center; /* 中央揃え */
+	margin: 0.5em 0; /* 上下に余白 */
+	text-shadow: 0 0 20px currentColor; /* 文字色と同じ色で光る */
+	transition: all 0.3s ease; /* 変化時のスムーズなアニメーション */
+	font-family: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', 'Courier New', monospace; /* クールな等幅フォント */
+	font-variant-numeric: tabular-nums; /* 数字を等幅に */
+	letter-spacing: 0.05em; /* 文字間隔を調整（JetBrains Monoに最適化） */
+}
+
+/* 現在時刻のスタイル */
+#now {
+	color: #00f5ff; /* シアン色 */
+	animation: digitalClock 1s ease-in-out infinite; /* デジタル時計風の点滅 */
+}
+
+/* 素数秒の瞬間の特別なスタイル */
+#now.prime-moment {
+	color: #ff0066; /* ピンク色に変更 */
+	animation: primeAlert 0.5s ease-in-out infinite; /* 激しく光る */
+	transform: scale(1.05); /* 少し拡大 */
+}
+
+/* デジタル時計の通常の点滅アニメーション */
+@keyframes digitalClock {
+	0%, 100% { text-shadow: 0 0 10px currentColor; }
+	50% { text-shadow: 0 0 40px currentColor, 0 0 50px currentColor; }
+}
+
+/* 素数秒時の警告アニメーション（激しく光る） */
+@keyframes primeAlert {
+	0%, 100% { 
+		text-shadow: 0 0 20px #ff0066, 0 0 40px #ff0066, 0 0 60px #ff0066;
+		transform: scale(1.05);
+	}
+	50% { 
+		text-shadow: 0 0 30px #ff0066, 0 0 50px #ff0066, 0 0 70px #ff0066;
+		transform: scale(1.1);
+	}
+}
+
+/* 次の素数秒表示のスタイル */
+#next {
+	color: #ffff00; /* 黄色 */
+}
+
+/* 情報テキスト（素因数分解など）のスタイル */
+.info-text {
+	font-size: 1em;
+	margin: 1em 0;
+	text-align: center;
+	color: #cccccc; /* 薄いグレー */
+	background: rgba(0, 0, 0, 0.3); /* 半透明の黒背景 */
+	padding: 1em;
+	border-radius: 10px; /* 角を丸く */
+	border-left: 4px solid #00f5ff; /* 左側にシアン色のアクセント */
+	border-right: 4px solid #00f5ff; /* 右側にシアン色のアクセント */
+	font-family: 'Courier New', monospace; /* 等幅フォント */
+}
+
+/* フッター部分のスタイル */
+.footer {
+	margin-top: 3em; /* 上に大きな余白 */
+	text-align: center;
+	font-size: 0.9em; /* 少し小さめのフォント */
+	color: #888; /* 薄いグレー */
+}
+
+/* フッター内のリンクのスタイル */
+.footer a {
+	color: #00f5ff; /* シアン色 */
+	text-decoration: none; /* 下線を削除 */
+	transition: color 0.3s ease; /* 色変化のスムーズなアニメーション */
+}
+
+/* フッターリンクのホバー効果 */
+.footer a:hover {
+	color: #ff00ff; /* マゼンタ色に変更 */
+	text-shadow: 0 0 10px currentColor; /* 光るエフェクト */
+}
+
+/* ==============================================
+   レスポンシブデザイン - 画面サイズに応じて調整
+   ============================================== */
+
+/* タブレット サイズ（768px以下） */
+@media (max-width: 768px) {
+	h1 {
+		font-size: 2em; /* タイトルを少し小さく */
+	}
+	
+	b {
+		font-size: 2em; /* 時刻表示を小さく */
+	}
+	
+	.clock-container {
+		margin: 0.5em; /* 余白を狭く */
+		padding: 1.5em; /* パディングを狭く */
+	}
+	
+	.time-label {
+		font-size: 1em; /* ラベルを小さく */
+	}
+}
+
+/* スマートフォン サイズ（480px以下） */
+@media (max-width: 480px) {
+	h1 {
+		font-size: 1.5em; /* さらに小さく */
+	}
+	
+	b {
+		font-size: 1.5em; /* さらに小さく */
+	}
+	
+	.clock-container {
+		padding: 1em; /* パディングをさらに狭く */
+	}
+}
+
+/* ==============================================
+   パーティクル効果（未使用だが将来の拡張用）
+   ============================================== */
+.particle {
+	position: absolute;
+	width: 2px;
+	height: 2px;
+	background: rgba(0, 245, 255, 0.7); /* シアン色の小さな点 */
+	border-radius: 50%; /* 円形 */
+	animation: float 6s ease-in-out infinite; /* ゆっくり浮遊 */
+	z-index: -1; /* 背景として配置 */
+}
+
+/* パーティクルの浮遊アニメーション */
+@keyframes float {
+	0%, 100% {
+		transform: translateY(0px) rotate(0deg);
+		opacity: 1;
+	}
+	50% {
+		transform: translateY(-20px) rotate(180deg);
+		opacity: 0.5;
+	}
 }
 </style>
 </head>
 <body onload="setup();">
 <h1>素数秒時計</h1>
-<p>
-現在の時刻
-</p>
-<b id="now">
-　
-</b>
-<p id="nowc">
-</p>
-<p>
-次の素数秒
-</p>
-<b id="next">
-　
-</b>
-<p id="nextc">
-</p>
-<p id="nextprime">
-</p>
-<p>
-Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a>.<br />
-<a href="../">すなばに戻る</a>
-</p>
+
+<div class="clock-container">
+	<div class="time-label">現在の時刻</div>
+	<b id="now">　</b>
+	<div class="info-text" id="nowc"></div>
+</div>
+
+<div class="clock-container">
+	<div class="time-label">次の素数秒</div>
+	<b id="next">　</b>
+	<div class="info-text" id="nextc"></div>
+</div>
+
+<div class="footer">
+	<p>Written by <a href="http://uehara.tetsutaro.jp">Tetsutaro UEHARA</a></p>
+	<p><a href="../">すなばに戻る</a></p>
+</div>
 </body>
 </html>
