@@ -165,8 +165,10 @@
 
     <script>
         // --- 目標の日時を設定 ---
-        const targetDate = new Date("2026-01-30T17:00:00"); // 卒論の〆切
-        const targetDate2 = new Date("2026-01-29T17:00:00"); // 修論の〆切
+//        const targetDate = new Date("2026-01-30T17:00:00"); // 卒論の〆切
+        const targetDate = new Date("2026-01-30T17:46:00"); // 卒論の〆切テスト
+//        const targetDate2 = new Date("2026-01-29T17:00:00"); // 修論の〆切
+        const targetDate2 = new Date("2026-01-30T17:47:00"); // 卒論の〆切
 
         const daysEl = document.getElementById('days');
         const hoursEl = document.getElementById('hours');
@@ -184,37 +186,37 @@
             const distance = targetDate.getTime() - now;
             const distance2 = targetDate2.getTime() - now;
 
-            if (distance < 0) {
-                clearInterval(countdownInterval);
+            if (distance < 0) { // 
                 document.getElementById('countdown').innerHTML = "<h1>DEADLINE!</h1>";
-                return;
+            } else {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                // 値が変わった時だけアニメーションを適用
+                if (parseInt(daysEl.innerText) !== days) flipElement(daysEl, days);
+                if (parseInt(hoursEl.innerText) !== hours) flipElement(hoursEl, hours);
+                if (parseInt(minutesEl.innerText) !== minutes) flipElement(minutesEl, minutes);
+                if (parseInt(secondsEl.innerText) !== seconds) flipElement(secondsEl, seconds);
             }
 
             if (distance2 < 0) {
-                clearInterval(countdownInterval);
                 document.getElementById('countdown2').innerHTML = "<h1>DEADLINE!</h1>";
-                return;
+            } else {
+                const days2 = Math.floor(distance2 / (1000 * 60 * 60 * 24));
+                const hours2 = Math.floor((distance2 % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes2 = Math.floor((distance2 % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds2 = Math.floor((distance2 % (1000 * 60)) / 1000);
+                // 値が変わった時だけアニメーションを適用
+                if (parseInt(days2El.innerText) !== days2) flipElement(days2El, days2);
+                if (parseInt(hours2El.innerText) !== hours2) flipElement(hours2El, hours2);
+                if (parseInt(minutes2El.innerText) !== minutes2) flipElement(minutes2El, minutes2);
+                if (parseInt(seconds2El.innerText) !== seconds2) flipElement(seconds2El, seconds2);
             }
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            const days2 = Math.floor(distance2 / (1000 * 60 * 60 * 24));
-            const hours2 = Math.floor((distance2 % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes2 = Math.floor((distance2 % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds2 = Math.floor((distance2 % (1000 * 60)) / 1000);
-            
-            // 値が変わった時だけアニメーションを適用
-            if (parseInt(daysEl.innerText) !== days) flipElement(daysEl, days);
-            if (parseInt(hoursEl.innerText) !== hours) flipElement(hoursEl, hours);
-            if (parseInt(minutesEl.innerText) !== minutes) flipElement(minutesEl, minutes);
-            if (parseInt(secondsEl.innerText) !== seconds) flipElement(secondsEl, seconds);
-            if (parseInt(days2El.innerText) !== days2) flipElement(days2El, days2);
-            if (parseInt(hours2El.innerText) !== hours2) flipElement(hours2El, hours2);
-            if (parseInt(minutes2El.innerText) !== minutes2) flipElement(minutes2El, minutes2);
-            if (parseInt(seconds2El.innerText) !== seconds2) flipElement(seconds2El, seconds2);
-            
+            if (distance < 0 && distance2 < 0) { // タイマー停止
+                clearInterval(countdownInterval);
+            }
         }, 1000);
         
         // アニメーションを適用し、テキストを更新する関数
