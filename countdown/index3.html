@@ -188,8 +188,13 @@
             const distance = targetDate.getTime() - now;
             const distance2 = targetDate2.getTime() - now;
 
-            if (distance < 0) { // 
-                document.getElementById('countdown').innerHTML = "<h1>DEADLINE!</h1>";
+            if (distance < 0) {
+                if (daysEl.innerText != "DE") {
+                    flipElement(daysEl, "DE");
+                    flipElement(hoursEl, "AD");
+                    flipElement(minutesEl, "LI");
+                    flipElement(secondsEl, "NE");
+                }
             } else {
                 const days = Math.floor(distance / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
