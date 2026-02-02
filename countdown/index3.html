@@ -208,7 +208,12 @@
             }
 
             if (distance2 < 0) {
-                document.getElementById('countdown2').innerHTML = "<h1>DEADLINE!</h1>";
+                if (days2El.innerText != "DE") {
+                    flipElement(days2El, "DE");
+                    flipElement(hours2El, "AD");
+                    flipElement(minutes2El, "LI");
+                    flipElement(seconds2El, "NE");
+                }
             } else {
                 const days2 = Math.floor(distance2 / (1000 * 60 * 60 * 24));
                 const hours2 = Math.floor((distance2 % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
