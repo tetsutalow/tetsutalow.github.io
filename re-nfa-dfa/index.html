@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>正規表現 → NFA → DFA → 最小DFA</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>正規表現 → NFA → DFA → 状態数最小化DFA</h1>
+  <p class="sub">正規表現を入力すると、NFA への変換・部分集合構成法による DFA 化・Moore's Algorithm による状態数最小化を順を追って表示します。</p>
+</header>
+
+<main>
+  <section class="input-area">
+    <label for="regex">正規表現</label>
+    <div class="row">
+      <input id="regex" type="text" spellcheck="false" autocomplete="off" placeholder="例: a(b|c)*(bd)*">
+      <button id="go" class="primary">変換する</button>
+    </div>
+    <div class="examples">
+      例:
+      <button class="example" data-re="a(b|c)*(bd)*">a(b|c)*(bd)*</button>
+      <button class="example" data-re="(a|b)*ab">(a|b)*ab</button>
+      <button class="example" data-re="a(a|b)*">a(a|b)*</button>
+      <button class="example" data-re="(a|b)*abb">(a|b)*abb</button>
+      <button class="example" data-re="(ab|a)*">(ab|a)*</button>
+      <button class="example" data-re="(a|b)*(aa|bb)">(a|b)*(aa|bb)</button>
+    </div>
+    <p class="small">使える記法: 連接 <code>ab</code>、選択 <code>a|b</code>、閉包 <code>a*</code>、括弧 <code>( )</code>、空列 <code>ε</code>。
+      <code>+</code> や <code>?</code> は普通の記号として扱います。記号として <code>*|()\</code> を使うときは <code>\*</code> のようにバックスラッシュを前に付けます。</p>
+    <div id="error" class="error"></div>
+  </section>
+
+  <div id="results" hidden>
+
+    <!-- §1 -->
+    <section class="stage">
+      <h2><span class="num">1</span>正規表現 → NFA <span id="nfa-count" class="count"></span></h2>
+      <div class="explain">
+        <ul>
+          <li>記号 <code>x</code> は、新しい状態への <code>x</code> 遷移 1 本になる。</li>
+          <li>連接 <code>AB</code> は A の終わりの状態を B の始まりの状態にする。</li>
+          <li>選択 <code>A|B</code> は始まりと終わりの状態を共有して 2 つの枝を作る。</li>
+          <li>閉包 <code>A*</code> は ε 遷移で「入る」「戻る」「読み飛ばす」「抜ける」の 4 本を足す。</li>
+        </ul>
+      </div>
+      <div id="parse-info" class="info"></div>
+      <div id="nfa-stepper" class="stepper"></div>
+      <div id="nfa-desc" class="desc"></div>
+      <div id="nfa-fig" class="fig"></div>
+      <details>
+        <summary>遷移の追加手順一覧（クリックでそのステップへ）</summary>
+        <ol id="nfa-list" class="steplist"></ol>
+      </details>
+    </section>
+
+    <!-- §2 -->
+    <section class="stage">
+      <h2><span class="num">2</span>NFA → DFA（部分集合構成法） <span id="dfa-count" class="count"></span></h2>
+      <div class="explain">
+        <ul>
+          <li>初期状態から ε で辿れる全ての状態をひとつにまとめ、これを初期状態にする。</li>
+          <li>ある状態から、同じ入力に対する遷移先はまとめてひとつの状態にする（ε があればその遷移先も 1 つにまとめる）。</li>
+          <li>まとめた状態の中に 1 つでも受理状態があれば、まとめた後も受理状態にする。</li>
+          <li>「まとめた」状態で元の状態の組合せが違えば別の状態と見なす。これをひたすら繰り返す。</li>
+        </ul>
+      </div>
+      <div id="sub-stepper" class="stepper"></div>
+      <div id="sub-desc" class="desc"></div>
+      <h3>NFA（赤枠: 展開中の状態の集合、塗り: 記号ごとの到達範囲）</h3>
+      <div id="sub-nfa-fig" class="fig"></div>
+      <h3>作られていく DFA</h3>
+      <div id="sub-dfa-fig" class="fig"></div>
+    </section>
+
+    <!-- §3 -->
+    <section class="stage">
+      <h2><span class="num">3</span>ラベルを振りなおす</h2>
+      <p>NFA の状態集合でできた DFA の各状態に、あ・い・う・… の名前を付けなおす（同じ DFA）。</p>
+      <div id="relabel-map"></div>
+      <div id="relabel-fig" class="fig"></div>
+      <h3>状態遷移表</h3>
+      <div id="relabel-table" class="tablewrap"></div>
+    </section>
+
+    <!-- §4 -->
+    <section class="stage">
+      <h2><span class="num">4</span>DFA の状態数最小化・ムーアのアルゴリズム（Moore's Algorithm）</h2>
+      <div class="explain">
+        <ul>
+          <li>まず全状態を受理状態とその他のグループに分ける。</li>
+          <li>入力に対する遷移先を表にし、遷移先がどのグループに属するかを見る。</li>
+          <li>同一グループ内で、遷移先グループのパターンが異なる状態があれば「矛盾」なので分割する。</li>
+          <li>これを分割できなくなるまで繰り返す。</li>
+        </ul>
+      </div>
+      <div id="moore-stepper" class="stepper"></div>
+      <div id="moore-desc" class="desc"></div>
+      <div id="moore-table" class="tablewrap"></div>
+      <details open>
+        <summary>分割の履歴（クリックでそのラウンドへ）</summary>
+        <ol id="moore-history" class="steplist"></ol>
+      </details>
+    </section>
+
+    <!-- §5 -->
+    <section class="stage">
+      <h2><span class="num">5</span>状態数最小の DFA <span id="min-count" class="count"></span></h2>
+      <p id="min-summary" class="summary"></p>
+      <div id="min-map"></div>
+      <div id="min-fig" class="fig"></div>
+      <h3>状態遷移表</h3>
+      <div id="min-table" class="tablewrap"></div>
+      <h3>受理テスト</h3>
+      <div class="row">
+        <input id="test-input" type="text" spellcheck="false" autocomplete="off" placeholder="入力文字列（例: abcbd）">
+        <button id="test-run">判定</button>
+      </div>
+      <div id="test-result"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <p>JavaScript のみで動作します（外部ライブラリ不使用）。構成法と最小化手順は講義「言語処理系 第4回 続・字句解析」に準拠。</p>
+</footer>
+
+<script src="js/automata.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
