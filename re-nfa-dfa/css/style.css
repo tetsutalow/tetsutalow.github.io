@@ -1,0 +1,102 @@
+/* ===== 正規表現 → NFA → DFA → 最小DFA ===== */
+:root {
+  --accent: #8b1a2b;
+  --accent-light: #fbe9ec;
+  --ink: #222;
+  --muted: #666;
+  --line: #d8d8d8;
+  --bg: #fafafa;
+  --card: #fff;
+  --code: #f1f1f4;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", "Noto Sans JP", system-ui, sans-serif;
+  color: var(--ink); background: var(--bg); line-height: 1.6; font-size: 15px;
+}
+header { background: var(--accent); color: #fff; padding: 18px 24px; }
+header h1 { margin: 0; font-size: 1.45rem; font-weight: 600; letter-spacing: .02em; }
+header .sub { margin: 6px 0 0; opacity: .9; font-size: .92rem; }
+main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 40px; }
+footer { color: var(--muted); font-size: .8rem; text-align: center; padding: 10px 0 30px; }
+
+code { font-family: "Consolas", "Menlo", "Cascadia Code", monospace; background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: .95em; }
+button {
+  font: inherit; padding: 6px 14px; border-radius: 6px; border: 1px solid #bbb; background: #fff; color: var(--ink); cursor: pointer;
+}
+button:hover:not(:disabled) { background: #f3f3f3; }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.primary:hover:not(:disabled) { background: #6f1422; }
+input[type=text] { font: inherit; font-family: "Consolas", "Menlo", monospace; font-size: 1.05rem; padding: 8px 10px; border: 1px solid #bbb; border-radius: 6px; flex: 1; min-width: 0; }
+
+.input-area { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-bottom: 18px; }
+.input-area label { font-weight: 600; }
+.row { display: flex; gap: 8px; margin: 6px 0 8px; }
+.examples { font-size: .9rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.examples button { padding: 2px 9px; font-family: "Consolas", "Menlo", monospace; font-size: .9rem; }
+.small { font-size: .85rem; color: var(--muted); }
+.error { color: #c00; font-weight: 600; min-height: 1.2em; }
+
+.stage { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px 20px; margin-bottom: 20px; }
+.stage h2 { margin: 0 0 8px; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.stage h2 .num { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent); color: #fff; font-size: .95rem; }
+.stage h2 .count { font-size: .9rem; color: var(--muted); font-weight: normal; }
+.stage h3 { font-size: 1rem; margin: 14px 0 6px; color: var(--accent); }
+.explain { background: var(--accent-light); border-radius: 8px; padding: 8px 14px; font-size: .9rem; margin: 8px 0 12px; }
+.explain ul { margin: 4px 0; padding-left: 20px; }
+.info div { margin: 2px 0; }
+
+.stepper { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
+.step-ind { font-weight: 600; min-width: 9em; text-align: center; padding: 4px 8px; background: var(--code); border-radius: 6px; }
+.desc { border-left: 4px solid var(--accent); background: #fff8f8; padding: 8px 14px; margin: 8px 0 10px; border-radius: 0 6px 6px 0; }
+.desc p { margin: 4px 0; }
+.desc ul.results { margin: 4px 0; padding-left: 18px; }
+.desc .note { color: var(--accent); font-weight: 600; }
+.sym { display: inline-block; min-width: 1.6em; text-align: center; padding: 0 6px; border-radius: 4px; font-family: "Consolas", "Menlo", monospace; font-weight: 700; margin-right: 4px; }
+.tag { display: inline-block; font-size: .78rem; padding: 0 7px; border-radius: 10px; background: #e5e5e5; margin-left: 6px; vertical-align: 1px; }
+.tag.new { background: #ffe08a; }
+.tag.acc { background: #bfe8bf; }
+.summary { font-weight: 600; font-size: 1.05rem; }
+
+.fig { overflow-x: auto; padding: 6px 0; }
+svg.automaton { display: block; max-width: 100%; height: auto; font-family: "Times New Roman", "Hiragino Mincho ProN", "Yu Mincho", serif; }
+svg .edge { fill: none; stroke: #222; stroke-width: 2; }
+svg .edge.edge-hl { stroke: #d0202a; stroke-width: 3; }
+svg .node { stroke: #2a62a8; stroke-width: 2; }
+svg .node-inner { stroke: #2a62a8; stroke-width: 1.6; }
+svg .state.src .node { stroke: #d0202a; stroke-width: 3.5; }
+svg .slabel { font-size: 15px; fill: #111; }
+svg .elabel { font-size: 17px; font-style: italic; fill: #111; paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+
+.steplist { font-size: .88rem; padding-left: 26px; }
+.steplist li { cursor: pointer; padding: 1px 4px; border-radius: 4px; }
+.steplist li:hover { background: #f1f1f1; }
+.steplist li.done { color: var(--muted); }
+.steplist li.current { background: #ffe9a8; color: var(--ink); font-weight: 600; }
+details summary { cursor: pointer; color: var(--muted); font-size: .9rem; margin-top: 8px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { padding: 2px 10px; border-radius: 14px; border: 1px solid rgba(0,0,0,.15); font-size: .9rem; }
+
+.tablewrap { overflow-x: auto; }
+table.ttable { border-collapse: collapse; margin: 6px 0; font-size: 1rem; }
+table.ttable th, table.ttable td { border: 1px solid #333; padding: 6px 16px; text-align: center; min-width: 3.2em; }
+table.ttable thead th { background: #f5b7b7; }
+table.ttable th.corner { font-size: .75rem; line-height: 1.2; font-weight: normal; }
+table.ttable th.symhead { font-family: "Times New Roman", serif; font-style: italic; font-size: 1.25rem; }
+table.ttable th.statehead { font-weight: 600; }
+table.ttable th.grouphead { font-family: "Times New Roman", serif; font-style: italic; font-size: 1.15rem; }
+table.ttable td { font-family: "Times New Roman", "Hiragino Mincho ProN", "Yu Mincho", serif; }
+
+.conflict { color: #d0202a; }
+.bucket { display: inline-block; border: 3px solid; border-radius: 4px; padding: 0 6px; margin: 0 3px; }
+.ok { color: #1a9c4a; font-size: 1.1rem; }
+.ng { color: #d0202a; font-size: 1.1rem; }
+
+@media (max-width: 640px) {
+  main { padding: 12px 10px 30px; }
+  .stage { padding: 12px 12px 16px; }
+  table.ttable th, table.ttable td { padding: 4px 8px; }
+}
