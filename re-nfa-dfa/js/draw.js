@@ -190,14 +190,15 @@ function drawDFA(dfa, opts = {}) {
     L.forEach((s, k) => { pos[s] = [colX[li], (totalH - h) / 2 + k * rowGap + rowGap / 2]; });
   });
 
-  // 遷移を (from,to) でまとめる
-  const merged = new Map();
-  edges.forEach(e => {
-    const k = e.from + '>' + e.to;
-    if (!merged.has(k)) merged.set(k, { from: e.from, to: e.to, syms: [] });
-    merged.get(k).syms.push(e.sym);
+  // 同じ状態間の遷移は記号ごとに別の矢印にする（並行する矢印には番号 idx を付けて少しずつずらす）
+  const pairCount = new Map();
+  const items = edges.map(e => {
+    const key = e.from + '>' + e.to;
+    const idx = pairCount.get(key) || 0;
+    pairCount.set(key, idx + 1);
+    return { from: e.from, to: e.to, sym: e.sym, idx };
   });
-  const has = (a, b) => merged.has(a + '>' + b);
+  const has = (a, b) => pairCount.has(a + '>' + b);
 
   const svg = svgEl('svg', { class: 'automaton dfa' });
   svg.appendChild(arrowDefs(suffix));
@@ -209,9 +210,9 @@ function drawDFA(dfa, opts = {}) {
   g.appendChild(svgEl('path', { d: `M ${sx - rx[dfa.start] - 36} ${sy} L ${sx - rx[dfa.start] - 2} ${sy}`, class: 'edge', 'marker-end': `url(#arrow${suffix})` }));
 
   const labelEls = [];
-  for (const m of merged.values()) {
+  for (const m of items) {
     const [xa, ya] = pos[m.from], [xb, yb] = pos[m.to];
-    const text = m.syms.join(', ');
+    const text = m.sym;
     const hl = opts.hlEdges && opts.hlEdges.has(m.from + '>' + m.to);
     const stroke = hl ? '#d0202a' : '#222';
     const marker = `url(#${hl ? 'arrowhl' : 'arrow'}${suffix})`;
@@ -220,11 +221,12 @@ function drawDFA(dfa, opts = {}) {
       // 自己ループ: 列の一番上の状態なら上側、それ以外は下側に描く（上の状態と重ならないように）
       const up = layers[layer[m.from]][0] === m.from;
       const s = up ? -1 : 1;
-      const y0 = ya + s * (ry - 2), yc = ya + s * (ry + 50);
-      const d = `M ${xa - 12} ${y0} C ${xa - 34} ${yc}, ${xa + 34} ${yc}, ${xa + 12} ${y0}`;
+      const ext = 26 * m.idx;                  // 2本目以降のループは一回り大きく
+      const y0 = ya + s * (ry - 2), yc = ya + s * (ry + 50 + ext * 1.4);
+      const d = `M ${xa - 12} ${y0} C ${xa - 34 - ext} ${yc}, ${xa + 34 + ext} ${yc}, ${xa + 12} ${y0}`;
       g.appendChild(svgEl('path', { d, class: cls, stroke, 'marker-end': marker }));
-      labelEls.push(edgeLabel(xa, up ? ya - ry - 42 : ya + ry + 52, text));
-      if (up) minY = Math.min(minY, ya - ry - 60); else maxY = Math.max(maxY, ya + ry + 62);
+      labelEls.push(edgeLabel(xa, up ? ya - ry - 42 - ext : ya + ry + 52 + ext, text));
+      if (up) minY = Math.min(minY, ya - ry - 60 - ext); else maxY = Math.max(maxY, ya + ry + 62 + ext);
       continue;
     }
     let k;                                     // 曲がり具合
@@ -232,17 +234,21 @@ function drawDFA(dfa, opts = {}) {
     const [ux, uy] = unit(xb - xa, yb - ya);
     let nx = -uy, ny = ux;                     // 進行方向の右側
     let cxp, cyp;
-    if (layer[m.to] > layer[m.from]) k = 0;       // 前進: 直線（逆向きは外側を回るので重ならない）
+    if (layer[m.to] > layer[m.from]) {
+      // 前進: 1本目は直線、2本目以降は左右交互に曲げる（逆向きは外側を回るので重ならない）
+      k = m.idx === 0 ? 0 : (m.idx % 2 ? 1 : -1) * 32 * Math.ceil(m.idx / 2);
+    }
     else if (layer[m.to] === layer[m.from]) {
       // 同じ列の中の遷移: 逆向きもあれば右手側に、なければ左側（入ってくる遷移と交差しにくい）に曲げる
-      k = 40;
+      k = 40 + 30 * m.idx;
       if (!has(m.to, m.from)) { nx = -1; ny = 0; }
     }
     else {
       // 戻り遷移: 図の外側（上半分の状態なら上、下半分なら下）を大きく回る
       const diff = layer[m.from] - layer[m.to];
       const above = (ya + yb) / 2 <= totalH / 2;
-      const yOut = above ? Math.min(ya, yb) - (70 + 40 * diff) : Math.max(ya, yb) + (70 + 40 * diff);
+      const outH = 70 + 40 * diff + 30 * m.idx;
+      const yOut = above ? Math.min(ya, yb) - outH : Math.max(ya, yb) + outH;
       cxp = mx; cyp = yOut;
       nx = 0; ny = above ? -1 : 1; k = Math.abs(yOut - my);
     }
