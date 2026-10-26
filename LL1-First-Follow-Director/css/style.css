@@ -1,0 +1,134 @@
+:root {
+  --accent: #8b0000;
+  --accent2: #b22222;
+  --bg: #fafafa;
+  --panel: #fff;
+  --line: #d8d8d8;
+  --new: #fff3b0;
+  --newline: #e0a800;
+  --ok: #2e7d32;
+  --ng: #c62828;
+  --hl: #ffe082;
+  --mono: "Consolas", "Menlo", "BIZ UDGothic", "Noto Sans Mono CJK JP", monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif; background: var(--bg); color: #222; line-height: 1.55; }
+header { background: var(--accent); color: #fff; padding: 14px 24px; }
+header h1 { margin: 0; font-size: 1.35rem; font-weight: 600; }
+header .sub { margin: 6px 0 0; font-size: .9rem; opacity: .92; }
+main { max-width: 1240px; margin: 0 auto; padding: 16px 20px 40px; }
+footer { text-align: center; color: #666; font-size: .85rem; padding: 16px; border-top: 1px solid var(--line); }
+
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; }
+h2 { margin: 0 0 10px; font-size: 1.15rem; color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 4px; }
+h3 { margin: 14px 0 6px; font-size: 1rem; }
+.rule { background: #fdf7f7; border-left: 4px solid var(--accent2); padding: 6px 12px; margin-bottom: 10px; font-size: .92rem; }
+.rule p { margin: 4px 0; }
+.rule ul { margin: 4px 0 4px 18px; padding: 0; }
+.row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+.col { flex: 1 1 360px; min-width: 0; }
+textarea { width: 100%; font-family: var(--mono); font-size: 1.05rem; padding: 8px; border: 1px solid #bbb; border-radius: 6px; resize: vertical; }
+input[type=text] { font-family: var(--mono); font-size: 1.05rem; padding: 5px 8px; border: 1px solid #bbb; border-radius: 6px; }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 8px 0; }
+button { font: inherit; padding: 5px 12px; border: 1px solid #999; background: #f4f4f4; border-radius: 6px; cursor: pointer; }
+button:hover { background: #e8e8e8; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.primary:hover { background: var(--accent2); }
+button:disabled { opacity: .45; cursor: default; }
+.examples { font-size: .9rem; margin: 6px 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.examples button { font-size: .85rem; padding: 3px 8px; }
+.help { font-size: .88rem; color: #444; }
+.help ul { margin: 4px 0 4px 18px; padding: 0; }
+code { font-family: var(--mono); background: #f0f0f0; padding: 0 3px; border-radius: 3px; }
+
+/* 文法表示 */
+.prods { border-collapse: collapse; font-family: var(--mono); font-size: 1.05rem; }
+.prods td { padding: 2px 8px; vertical-align: top; }
+.prods td.num { color: #888; font-size: .85rem; text-align: right; }
+.prods tr.hl td { background: var(--hl); }
+.prods tr.ng td { background: #ffd9d9; }
+.symlist { font-size: .9rem; margin-top: 8px; }
+.symlist b { margin-right: 4px; }
+.sym { font-family: var(--mono); background: #eee; border-radius: 4px; padding: 0 5px; margin: 0 2px; display: inline-block; }
+.sym.nt { background: #e3ecf7; }
+.sym.t { background: #eaf4e4; }
+
+#messages .err { color: var(--ng); background: #fff0f0; border: 1px solid #f5b5b5; padding: 6px 10px; border-radius: 6px; margin: 6px 0; }
+#messages .warn { color: #7a5200; background: #fff8e3; border: 1px solid #f0d27a; padding: 6px 10px; border-radius: 6px; margin: 6px 0; }
+#messages .info { color: #1a4a7a; background: #eef5fc; border: 1px solid #b7d2ec; padding: 6px 10px; border-radius: 6px; margin: 6px 0; }
+.msg { font-size: .9rem; }
+.msg.err { color: var(--ng); }
+
+/* ステッパ */
+.stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #f3f3f3; border-radius: 6px; padding: 6px 10px; margin: 8px 0; }
+.stepper .pos { font-size: .9rem; min-width: 7em; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper input[type=range] { flex: 1 1 160px; min-width: 120px; }
+
+/* 集合の表 */
+table.sets { border-collapse: collapse; font-family: var(--mono); font-size: 1rem; width: 100%; }
+table.sets th, table.sets td { border: 1px solid #ccc; padding: 4px 10px; text-align: left; }
+table.sets th { background: #f0f0f0; font-weight: 600; }
+table.sets td.set { letter-spacing: .02em; }
+table.sets tr.hl td { background: var(--hl); }
+table.sets tr.ok td.result { color: var(--ok); font-weight: bold; }
+table.sets tr.ng td { background: #ffd9d9; }
+.elem { display: inline-block; padding: 0 3px; border-radius: 3px; }
+.elem.new { background: var(--new); outline: 1.5px solid var(--newline); font-weight: bold; }
+.elem.common { background: #ffb3b3; outline: 1.5px solid var(--ng); font-weight: bold; }
+.elem.dim { color: #999; }
+
+/* 説明欄 */
+.desc { font-size: .97rem; }
+.desc p { margin: 4px 0; }
+.desc .formula { font-family: var(--mono); background: #f7f7f7; padding: 4px 8px; border-radius: 4px; display: inline-block; margin: 2px 0; }
+.desc .note { color: #555; font-size: .9rem; }
+.desc .ok { color: var(--ok); font-weight: bold; }
+.desc .ng { color: var(--ng); font-weight: bold; }
+.verdict { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 1.05rem; }
+.verdict.ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+.verdict.ng { background: #ffebee; border: 1px solid #ef9a9a; color: #b71c1c; }
+.verdict ul { margin: 4px 0 0 18px; }
+
+/* 構文解析表 */
+table.ptable { border-collapse: collapse; font-family: var(--mono); font-size: .92rem; }
+table.ptable th, table.ptable td { border: 1px solid #ccc; padding: 3px 7px; text-align: center; white-space: nowrap; }
+table.ptable th { background: #f0f0f0; }
+table.ptable td.conf { background: #ffd9d9; color: var(--ng); }
+table.ptable td.cell { background: #f6fbf4; }
+
+/* 構文解析の表示 */
+.input-view { font-family: var(--mono); font-size: 2rem; letter-spacing: .08em; margin: 6px 0 2px; white-space: nowrap; overflow-x: auto; padding-bottom: 2px; }
+.input-view .tok { display: inline-block; text-align: center; position: relative; padding: 0 2px; }
+.input-view .tok.read { color: var(--ng); }
+.input-view .tok.cur { background: #fff6cc; border-radius: 4px; }
+.input-view .tok.cur::after { content: "▲"; position: absolute; left: 50%; transform: translateX(-50%); top: 100%; font-size: .55em; color: #b59a00; line-height: 1; }
+.input-view .tok.end { color: #888; }
+.input-view .label { font-size: .85rem; color: #666; letter-spacing: 0; margin-right: 8px; font-family: inherit; }
+.stack { font-size: .9rem; margin-top: 8px; }
+.stack .fr { display: inline-block; font-family: var(--mono); background: #e3ecf7; border-radius: 4px; padding: 0 6px; margin: 2px 2px; }
+.stack .fr.top { background: var(--hl); font-weight: bold; }
+.deriv { font-size: .9rem; margin-top: 8px; color: #444; word-break: break-all; }
+.deriv .cur { font-weight: bold; color: #000; background: var(--hl); border-radius: 3px; padding: 0 3px; }
+pre.code { font-family: var(--mono); font-size: .95rem; background: #fcfcfc; border: 1px solid #ddd; border-radius: 6px; padding: 8px 10px; margin: 0; overflow: auto; max-height: 640px; line-height: 1.5; }
+pre.code .ln { display: block; padding-left: 1.6em; position: relative; white-space: pre; }
+pre.code .ln.cur { background: var(--hl); }
+pre.code .ln.cur::before { content: "➜"; position: absolute; left: .2em; color: var(--accent); }
+pre.code .ln.active { background: #f1f5fb; }
+pre.code .cm { color: #888; }
+.tree-box { overflow-x: auto; border: 1px dashed #ccc; border-radius: 6px; padding: 6px; min-height: 80px; background: #fff; }
+svg.tree { display: block; font-family: var(--mono); font-size: 16px; }
+svg.tree .edge { stroke: #777; stroke-width: 1.6; }
+svg.tree .node rect, svg.tree .node circle { fill: #fff; stroke: #555; stroke-width: 1.5; }
+svg.tree .node.nt rect { fill: #e3ecf7; }
+svg.tree .node.nt.expanded rect { fill: #f4f7fb; }
+svg.tree .node.t circle { fill: #f6f6f6; stroke-dasharray: 3 2; }
+svg.tree .node.t.matched circle { fill: #ffd6d6; stroke: var(--ng); stroke-dasharray: none; }
+svg.tree .node.t.matched text { fill: var(--ng); font-weight: bold; }
+svg.tree .node.eps circle { fill: #fff; stroke: #aaa; }
+svg.tree .node.eps text { fill: #888; }
+svg.tree .node.hl rect, svg.tree .node.hl circle { stroke: var(--newline); stroke-width: 3; fill: var(--hl); }
+svg.tree text { fill: #111; }
+
+@media (max-width: 800px) {
+  .input-view { font-size: 1.5rem; }
+}

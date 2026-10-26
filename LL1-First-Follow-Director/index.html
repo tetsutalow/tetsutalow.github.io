@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LL(1) 文法の判定と再帰的下向き構文解析</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>文法 → First / Follow / Director 集合 → LL(1) 判定 → 構文解析</h1>
+  <p class="sub">文法を入力すると、First集合・Follow集合・Director集合を順に求め、LL(1)文法かどうかを判定します。LL(1)文法なら文字列を入力して再帰的下向き構文解析の様子と構文木を表示します。</p>
+</header>
+
+<main>
+<!-- ================= 0. 文法の入力 ================= -->
+<section id="sec-input">
+  <h2>文法の入力</h2>
+  <div class="row">
+    <div class="col">
+      <textarea id="grammar" rows="8" spellcheck="false">E → T E'
+E' → + T E' | ε
+T → F T'
+T' → * F T' | ε
+F → ( E ) | i</textarea>
+      <div class="ctl">
+        <label>開始記号 <select id="start"></select></label>
+        <button id="run" class="primary">解析する</button>
+        <button id="btn-leftrec" title="直接左再帰 A→Aα|β を A→βA'，A'→αA'|ε に書き換える">左再帰を除去</button>
+        <button id="btn-factor" title="共通の先頭部分を括り出す">括り出し</button>
+      </div>
+      <div class="examples">例:
+        <button class="example" data-g="E → T E'
+E' → + T E' | ε
+T → F T'
+T' → * F T' | ε
+F → ( E ) | i">練習問題（p.29）</button>
+        <button class="example" data-g="S → a A d
+A → b c | b">S→aAd, A→bc|b（p.13）</button>
+        <button class="example" data-g="式 → 式 + 項 | 項
+項 → 項 * 因子 | 因子
+因子 → ( 式 ) | 名前
+名前 → a | b | c">左再帰あり（p.21）</button>
+        <button class="example" data-g="文 → if 式 then 文 文' | x
+文' → else 文 | ε
+式 → c">if-then-else（曖昧）</button>
+        <button class="example" data-g="S → A b
+A → b | ε">S→Ab, A→b|ε</button>
+        <button class="example" data-g="A → B a | c
+B → A b | d">間接左再帰</button>
+      </div>
+      <details class="help">
+        <summary>書き方</summary>
+        <ul>
+          <li>1行に1つの左辺を書き、右辺の選択肢は <code>|</code> で区切ります（<code>→</code> の代わりに <code>-></code> も可）。行頭が <code>|</code> の行は前の行の続きです。</li>
+          <li>左辺に現れる記号が非終端記号です。右辺では非終端記号名を最長一致で切り出し、残りは1文字ずつ終端記号になります。空白は無視されます。</li>
+          <li><code>E'</code> のように <code>'</code> を付けた名前は1つの記号です。<code>〈式〉</code> や <code>&lt;expr&gt;</code> も1つの記号です。</li>
+          <li>複数文字の終端記号は <code>"if"</code> のように <code>"</code> で囲みます（非終端記号名と重ならなければ囲まなくても構いません）。</li>
+          <li><code>ε</code> は空列です。<code>$</code> は入力の終わりを表す記号なので文法中では使えません。最初の左辺が開始記号になります（変更可）。</li>
+        </ul>
+      </details>
+    </div>
+    <div class="col" id="grammar-view"></div>
+  </div>
+  <div id="messages"></div>
+</section>
+
+<div id="results" hidden>
+
+<!-- ================= 1. First ================= -->
+<section id="sec-first">
+  <h2>1. First 集合（教科書 p.52）</h2>
+  <div class="rule">
+    <p>First(α)：α の先頭になりうる終端記号の集合。</p>
+    <ul>
+      <li>First(ε) = {ε}，First(aα) = {a}</li>
+      <li>First(Y) に ε が含まれていなければ First(Yα) = First(Y)，含まれていれば First(Yα) = (First(Y) − {ε}) ∪ First(α)</li>
+      <li>X → α なら First(X) に First(α) を加え、どの非終端記号にもそれ以上追加できなくなるまで繰り返す</li>
+    </ul>
+  </div>
+  <div class="stepper" id="st-first"></div>
+  <div class="row">
+    <div class="col desc" id="first-desc"></div>
+    <div class="col" id="first-table"></div>
+  </div>
+</section>
+
+<!-- ================= 2. Follow ================= -->
+<section id="sec-follow">
+  <h2>2. Follow 集合（教科書 p.53）</h2>
+  <div class="rule">
+    <p>Follow(A)：A の直後に現れうる終端記号の集合。</p>
+    <ul>
+      <li>開始記号 S について Follow(S) に $ を加える（$ は読み込み終わりを表す特殊記号）</li>
+      <li>A → αBβ のとき First(β) を Follow(B) に加える（ε は除く）</li>
+      <li>First(β) に ε が含まれるとき（または β = ε のとき）は Follow(A) を Follow(B) に加える</li>
+      <li>これを加えるものがなくなるまで繰り返す</li>
+    </ul>
+  </div>
+  <div class="stepper" id="st-follow"></div>
+  <div class="row">
+    <div class="col desc" id="follow-desc"></div>
+    <div class="col" id="follow-table"></div>
+  </div>
+</section>
+
+<!-- ================= 3. Director ================= -->
+<section id="sec-director">
+  <h2>3. Director 集合</h2>
+  <div class="rule">
+    <p>Director(A, α)：First(α)，ただし α が ε になりうる（α ⇒* ε）場合には Follow(A) も加えたもの。生成規則 A → α を適用すべき（先読みした際の）終端記号の集合。</p>
+  </div>
+  <div class="stepper" id="st-director"></div>
+  <div class="row">
+    <div class="col desc" id="director-desc"></div>
+    <div class="col" id="director-table"></div>
+  </div>
+</section>
+
+<!-- ================= 4. LL(1) 判定 ================= -->
+<section id="sec-ll1">
+  <h2>4. LL(1) 文法であるかの判定</h2>
+  <div class="rule">
+    <p>左再帰性がなく、かつ A → α | β のとき Director(A, α) ∩ Director(A, β) = Φ（空集合）をあらゆる生成規則について満たす文法が LL(1) 文法。生成規則に | が出てくる（または左辺に重複して出てくる）非終端記号について Director 集合を調べればよい。</p>
+  </div>
+  <div class="stepper" id="st-ll1"></div>
+  <div class="row">
+    <div class="col desc" id="ll1-desc"></div>
+    <div class="col" id="ll1-table"></div>
+  </div>
+  <div id="ll1-verdict"></div>
+</section>
+
+<!-- ================= 5. 構文解析 ================= -->
+<section id="sec-parse">
+  <h2>5. 再帰的下向き構文解析</h2>
+  <div class="rule">
+    <p>各非終端記号を関数にし、集合和 | のある所では1字句だけ先読みして Director 集合に含まれる生成規則を選ぶ（LL(1) なので必ず1つに決まり、バックトラックは起きない）。</p>
+  </div>
+  <div class="ctl">
+    <label>入力文字列 <input id="input" type="text" size="30" spellcheck="false" autocomplete="off"></label>
+    <button id="parse" class="primary">構文解析する</button>
+    <button id="gen">例文を作る</button>
+    <span id="parse-msg" class="msg"></span>
+  </div>
+  <div id="parse-area" hidden>
+    <div class="stepper" id="st-parse"></div>
+    <div class="row">
+      <div class="col">
+        <div id="input-view" class="input-view"></div>
+        <div id="parse-desc" class="desc"></div>
+        <div id="stack-view"></div>
+        <div id="deriv-view"></div>
+        <h3>構文木</h3>
+        <div id="tree-view" class="tree-box"></div>
+      </div>
+      <div class="col">
+        <h3 style="margin-top:0">構文解析プログラム（疑似コード）</h3>
+        <pre id="code-view" class="code"></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>講義「言語処理系 第5回 構文解析・下向き構文解析法」の手順に沿って計算しています。JavaScript のみで動作します。</footer>
+
+<script src="js/grammar.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
