@@ -14,7 +14,9 @@ const END = '$';
  * 1. 文法の読み込み
  *   ・1行に「左辺 → 右辺1 | 右辺2 | …」（→ の代わりに -> や ::= も可）
  *   ・行頭が | の行は直前の左辺の続き
- *   ・左辺に現れる記号が非終端記号。右辺は非終端記号名を最長一致で切り出し、
+ *   ・左辺に現れる記号が非終端記号
+ *   ・右辺が空白で区切られていれば（S → if E then S）単語ごとに1記号（単語モード）
+ *   ・右辺に空白がなければ（E→TE'）非終端記号名を最長一致で切り出し、
  *     それ以外は1文字ずつ終端記号とする（後ろの ' や ′ はプライムとして付ける）
  *   ・"id" のようにダブルクォートで囲むと複数文字の終端記号
  *   ・〈式〉 や <expr> は1つの記号
@@ -24,7 +26,31 @@ const ARROW_RE = /→|->|::=|⟶/;
 const ALT_CHARS = new Set(['|', '｜', '¦']);
 const PRIMES = new Set(["'", '′', '’']);
 
-function tokenizeBody(s, ntByLen) {
+/* 右辺を「空白で区切られた単語」として読む（単語モード） */
+function tokenizeWords(s) {
+  const alts = [[]];
+  for (const w of s.trim().split(/\s+/)) {
+    if (!w) continue;
+    if (w.length === 1 && ALT_CHARS.has(w)) { alts.push([]); continue; }
+    if (w === EPS || w === 'ϵ') continue;
+    const m = w.match(/^["“”](.*)["“”]$/);
+    if (m) {
+      if (!m[1]) throw new Error('空の "" は使えません（空列は ε と書きます）');
+      alts[alts.length - 1].push(m[1]); continue;
+    }
+    if ([...w].some(c => ALT_CHARS.has(c))) throw new Error(`「${w}」: 単語モードでは | の前後に空白を入れてください`);
+    alts[alts.length - 1].push(w);
+  }
+  return alts;
+}
+
+/* 右辺が空白区切りで書かれているか（| の両側以外に空白があれば単語モード） */
+function isWordMode(entries) {
+  return entries.some(e => e.body.split(/[|｜¦]/).some(seg => /\S\s+\S/.test(seg.trim())));
+}
+
+function tokenizeBody(s, ntByLen, wordMode) {
+  if (wordMode) return tokenizeWords(s);
   const alts = [[]];
   const push = x => alts[alts.length - 1].push(x);
   let i = 0;
@@ -85,10 +111,11 @@ function parseGrammar(text, startOverride) {
   for (const e of entries) if (!nts.includes(e.lhs)) nts.push(e.lhs);
   const ntSet = new Set(nts);
   const ntByLen = [...nts].sort((a, b) => b.length - a.length);
+  const wordMode = isWordMode(entries);
   const prods = [], terminals = [], seen = new Set();
   for (const e of entries) {
     let alts;
-    try { alts = tokenizeBody(e.body, ntByLen); }
+    try { alts = tokenizeBody(e.body, ntByLen, wordMode); }
     catch (err) { errors.push(`${e.line}行目: ${err.message}`); continue; }
     for (const rhs of alts) {
       const key = e.lhs + '\u0000' + rhs.join('\u0001');
@@ -108,10 +135,13 @@ function parseGrammar(text, startOverride) {
   let start = nts[0];
   if (startOverride && ntSet.has(startOverride)) start = startOverride;
   const prodsOf = new Map(nts.map(a => [a, prods.filter(p => p.lhs === a)]));
-  return { nts, ntSet, ntByLen, terminals, prods, prodsOf, start, errors, warnings };
+  return { nts, ntSet, ntByLen, terminals, prods, prodsOf, start, errors, warnings, wordMode };
 }
 
-const showSeq = rhs => rhs.length ? rhs.join('') : EPS;
+/* 記号列の表示。1文字（＋プライム）や 〈…〉 だけなら詰めて書き、
+   if や id のような単語の記号を含むときは空白で区切る */
+const isShortSym = x => /^.[’'′]*$/u.test(x) || /^[〈<][^〈〉<>]+[〉>][’'′]*$/.test(x);
+const showSeq = rhs => rhs.length ? (rhs.every(isShortSym) ? rhs.join('') : rhs.join(' ')) : EPS;
 
 /* ---------------------------------------------------------
  * 2. First 集合（教科書 p.52）
@@ -343,13 +373,8 @@ function leftFactor(g) {
 }
 
 function rulesToText(R, terminals) {
-  const ntByLen = [...R.order].sort((a, b) => b.length - a.length);
-  const ntSet = new Set(R.order);
-  const symText = x => {
-    if (ntSet.has(x)) return x;
-    const t = tokenizeBody(x, ntByLen);
-    return (t.length === 1 && t[0].length === 1 && t[0][0] === x) ? x : `"${x}"`;
-  };
+  // 空白区切り（単語モード）で書き出す。空白や | や " を含む記号だけ " で囲む
+  const symText = x => /[\s|｜¦"“”]/.test(x) ? `"${x}"` : x;
   return R.order.map(A => `${A} → ${R.rules.get(A).map(r => r.length ? r.map(symText).join(' ') : EPS).join(' | ')}`).join('\n');
 }
 

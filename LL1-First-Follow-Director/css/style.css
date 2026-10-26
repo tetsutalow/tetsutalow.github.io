@@ -99,6 +99,8 @@ table.ptable td.cell { background: #f6fbf4; }
 /* 構文解析の表示 */
 .input-view { font-family: var(--mono); font-size: 2rem; letter-spacing: .08em; margin: 6px 0 2px; white-space: nowrap; overflow-x: auto; padding-bottom: 2px; }
 .input-view .tok { display: inline-block; text-align: center; position: relative; padding: 0 2px; }
+.input-view.words { font-size: 1.5rem; letter-spacing: 0; }
+.input-view.words .tok { margin-right: .5em; }
 .input-view .tok.read { color: var(--ng); }
 .input-view .tok.cur { background: #fff6cc; border-radius: 4px; }
 .input-view .tok.cur::after { content: "▲"; position: absolute; left: 50%; transform: translateX(-50%); top: 100%; font-size: .55em; color: #b59a00; line-height: 1; }
@@ -118,15 +120,15 @@ pre.code .cm { color: #888; }
 .tree-box { overflow-x: auto; border: 1px dashed #ccc; border-radius: 6px; padding: 6px; min-height: 80px; background: #fff; }
 svg.tree { display: block; font-family: var(--mono); font-size: 16px; }
 svg.tree .edge { stroke: #777; stroke-width: 1.6; }
-svg.tree .node rect, svg.tree .node circle { fill: #fff; stroke: #555; stroke-width: 1.5; }
+svg.tree .node rect { fill: #fff; stroke: #555; stroke-width: 1.5; }
 svg.tree .node.nt rect { fill: #e3ecf7; }
 svg.tree .node.nt.expanded rect { fill: #f4f7fb; }
-svg.tree .node.t circle { fill: #f6f6f6; stroke-dasharray: 3 2; }
-svg.tree .node.t.matched circle { fill: #ffd6d6; stroke: var(--ng); stroke-dasharray: none; }
+svg.tree .node.t rect { fill: #f6f6f6; stroke-dasharray: 3 2; }
+svg.tree .node.t.matched rect { fill: #ffd6d6; stroke: var(--ng); stroke-dasharray: none; }
 svg.tree .node.t.matched text { fill: var(--ng); font-weight: bold; }
-svg.tree .node.eps circle { fill: #fff; stroke: #aaa; }
+svg.tree .node.eps rect { fill: #fff; stroke: #aaa; }
 svg.tree .node.eps text { fill: #888; }
-svg.tree .node.hl rect, svg.tree .node.hl circle { stroke: var(--newline); stroke-width: 3; fill: var(--hl); }
+svg.tree .node.hl rect { stroke: var(--newline); stroke-width: 3; fill: var(--hl); }
 svg.tree text { fill: #111; }
 
 @media (max-width: 800px) {

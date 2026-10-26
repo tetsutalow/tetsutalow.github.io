@@ -87,8 +87,8 @@ function drawTree(container, trace, upto, hl) {
     if (n.kind === 'nt' && n.expandedAt >= 0 && n.expandedAt <= upto) cls += ' expanded';
     if (id === hl) cls += ' hl';
     const g = svgEl('g', { class: cls, transform: `translate(${ox + p.x},${oy + p.y})` });
-    if (n.kind === 'nt') g.appendChild(svgEl('rect', { x: -p.w / 2, y: -R, width: p.w, height: R * 2, rx: 6 }));
-    else g.appendChild(svgEl('circle', { r: R }));
+    // 非終端記号は角丸の四角、終端記号は丸（長い単語は横長の丸）
+    g.appendChild(svgEl('rect', { x: -p.w / 2, y: -R, width: p.w, height: R * 2, rx: n.kind === 'nt' ? 6 : R }));
     g.appendChild(svgEl('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central' }, [n.sym]));
     svg.appendChild(g);
   }

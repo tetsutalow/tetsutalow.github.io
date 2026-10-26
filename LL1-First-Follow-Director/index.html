@@ -44,6 +44,14 @@ A → b c | b">S→aAd, A→bc|b（p.13）</button>
         <button class="example" data-g="文 → if 式 then 文 文' | x
 文' → else 文 | ε
 式 → c">if-then-else（曖昧）</button>
+        <button class="example" data-g="S → if E then S else S
+S → while E do S
+S → begin L end
+S → id := E
+L → S ; L
+L → S
+E → id
+E → num">if / while / begin（単語の終端記号）</button>
         <button class="example" data-g="S → A b
 A → b | ε">S→Ab, A→b|ε</button>
         <button class="example" data-g="A → B a | c
@@ -53,9 +61,10 @@ B → A b | d">間接左再帰</button>
         <summary>書き方</summary>
         <ul>
           <li>1行に1つの左辺を書き、右辺の選択肢は <code>|</code> で区切ります（<code>→</code> の代わりに <code>-></code> も可）。行頭が <code>|</code> の行は前の行の続きです。</li>
-          <li>左辺に現れる記号が非終端記号です。右辺では非終端記号名を最長一致で切り出し、残りは1文字ずつ終端記号になります。空白は無視されます。</li>
-          <li><code>E'</code> のように <code>'</code> を付けた名前は1つの記号です。<code>〈式〉</code> や <code>&lt;expr&gt;</code> も1つの記号です。</li>
-          <li>複数文字の終端記号は <code>"if"</code> のように <code>"</code> で囲みます（非終端記号名と重ならなければ囲まなくても構いません）。</li>
+          <li>左辺に現れる記号が非終端記号です。</li>
+          <li><b>右辺が空白で区切られているとき</b>（<code>S → if E then S</code> など）は、空白で区切られた単語がそれぞれ1つの記号になります。<code>if</code> や <code>:=</code> のような複数文字の終端記号はこの書き方で入れてください。</li>
+          <li><b>右辺に空白がないとき</b>（<code>E→TE'</code> など）は、非終端記号名を最長一致で切り出し、残りは1文字ずつ終端記号になります。<code>E'</code> のように <code>'</code> を付けた名前や <code>〈式〉</code> は1つの記号です。</li>
+          <li>どちらの書き方でも、<code>"if"</code> のように <code>"</code> で囲めば1つの終端記号になります。</li>
           <li><code>ε</code> は空列です。<code>$</code> は入力の終わりを表す記号なので文法中では使えません。最初の左辺が開始記号になります（変更可）。</li>
         </ul>
       </details>

@@ -117,20 +117,20 @@ function grammarTable(g, hlProds = [], ngProds = []) {
  * 解析の実行
  * ========================================================= */
 let G = null, AN = null;
+let userStart = null;   // 利用者が選択欄で明示的に選んだ開始記号（文法を書き換えたら忘れる）
 
 function runAnalysis() {
   const text = $('grammar').value;
   const startSel = $('start');
-  const g = parseGrammar(text, startSel.value);
+  const g = parseGrammar(text, userStart);
   const msgs = $('messages');
   msgs.replaceChildren();
   for (const e of g.errors) msgs.appendChild(h('div', { class: 'err' }, e));
   for (const w of g.warnings) msgs.appendChild(h('div', { class: 'warn' }, w));
 
   // 開始記号の選択肢
-  const prev = startSel.value;
   startSel.replaceChildren(...g.nts.map(a => h('option', { value: a }, a)));
-  startSel.value = g.nts.includes(prev) ? prev : g.start;
+  startSel.value = g.start;
 
   if (g.errors.length) { $('results').hidden = true; $('grammar-view').replaceChildren(); return; }
   G = g; AN = analyzeGrammar(g);
@@ -393,7 +393,7 @@ function renderParseSection() {
   msg.textContent = AN.isLL1 ? '' : 'LL(1) 文法ではないので構文解析はできません。文法を書き換えてください。';
   if (AN.isLL1 && !$('input').value) {
     const s = generateSentence(g, 3);
-    if (s) $('input').value = s.join(g.terminals.some(t => t.length > 1) ? ' ' : '');
+    if (s) $('input').value = s.join(g.wordMode ? ' ' : '');
   }
 }
 
@@ -420,6 +420,7 @@ function runParse() {
     // 入力
     const toks = trace.tokens.map((t, k) => h('span', { class: 'tok' + (k < pos ? ' read' : '') + (k === pos ? ' cur' : '') }, t));
     toks.push(h('span', { class: 'tok end' + (pos >= trace.tokens.length ? ' cur' : '') }, END));
+    $('input-view').className = 'input-view' + (g.wordMode ? ' words' : '');
     $('input-view').replaceChildren(h('span', { class: 'label' }, '入力:'), ...toks);
     // 説明
     const d = $('parse-desc');
@@ -453,11 +454,12 @@ function runParse() {
 
 /* ---------- 文法の書き換え ---------- */
 function rewrite(fn) {
-  const g = parseGrammar($('grammar').value, $('start').value);
+  const g = parseGrammar($('grammar').value, userStart);
   const msgs = $('messages');
   if (g.errors.length) { runAnalysis(); return; }
   const r = fn(g);
   $('grammar').value = r.text;
+  userStart = g.start;   // 書き換え後も開始記号は変えない
   runAnalysis();
   for (const n of r.notes) msgs.appendChild(h('div', { class: 'info' }, n));
   if (!r.notes.length) msgs.appendChild(h('div', { class: 'info' }, '書き換える箇所はありませんでした。'));
@@ -465,18 +467,19 @@ function rewrite(fn) {
 
 /* ---------- イベント ---------- */
 $('run').addEventListener('click', runAnalysis);
-$('start').addEventListener('change', runAnalysis);
+$('start').addEventListener('change', () => { userStart = $('start').value; runAnalysis(); });
+$('grammar').addEventListener('input', () => { userStart = null; });
 $('btn-leftrec').addEventListener('click', () => rewrite(removeLeftRecursion));
 $('btn-factor').addEventListener('click', () => rewrite(leftFactor));
 $('grammar').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) runAnalysis(); });
 document.querySelectorAll('.example').forEach(b => b.addEventListener('click', () => {
-  $('grammar').value = b.dataset.g; $('start').replaceChildren(); $('input').value = ''; runAnalysis();
+  $('grammar').value = b.dataset.g; userStart = null; $('input').value = ''; runAnalysis();
 }));
 $('parse').addEventListener('click', runParse);
 $('input').addEventListener('keydown', e => { if (e.key === 'Enter') runParse(); });
 $('gen').addEventListener('click', () => {
   const s = generateSentence(G, 4);
-  if (s) { $('input').value = s.join(G.terminals.some(t => t.length > 1) ? ' ' : ''); runParse(); }
+  if (s) { $('input').value = s.join(G.wordMode ? ' ' : ''); runParse(); }
 });
 
 runAnalysis();
