@@ -142,15 +142,16 @@ label.radio{display:inline-flex;gap:4px;align-items:center;cursor:pointer}
         </label>
         <label>記号の区切り:
           <select id="tokMode">
+            <option value="auto">自動（空白区切りなら単語単位）</option>
             <option value="char">1文字 = 1記号</option>
-            <option value="space">空白で区切る</option>
+            <option value="word">単語単位</option>
           </select>
         </label>
       </div>
       <textarea id="grammar" spellcheck="false" aria-label="文法"></textarea>
       <div class="row" style="margin-top:8px">
         <button class="primary" id="btnBuild">閉包と状態遷移図を作る</button>
-        <span class="hint">1行に1規則。<span class="mono">→</span> は <span class="mono">-&gt;</span> でも可、選択は <span class="mono">|</span>、空列は <span class="mono">ε</span>。左辺に現れる記号が非終端記号、最初の規則の左辺が開始記号。</span>
+        <span class="hint">1行に1規則。<span class="mono">→</span> は <span class="mono">-&gt;</span> でも可、選択は <span class="mono">|</span>、空列は <span class="mono">ε</span>。左辺に現れる記号が非終端記号、最初の規則の左辺が開始記号。右辺の記号を空白で区切ると <span class="mono">if</span> <span class="mono">else</span> <span class="mono">:=</span> のような単語が1つの記号になります。</span>
       </div>
       <div class="error" id="grammarError" role="alert"></div>
     </div>
@@ -235,16 +236,18 @@ const el = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 const EXAMPLES = [
-  { name: '式の文法（講義資料の例・SLR(1)）', mode: 'char', input: 'i+i*i',
+  { name: '式の文法（講義資料の例・SLR(1)）', mode: 'auto', input: 'i+i*i',
     text: 'E → E+T | T\nT → T*F | F\nF → (E) | i' },
-  { name: 'LR(0)文法の例（リスト）', mode: 'char', input: '(x,(x,x))',
+  { name: 'LR(0)文法の例（リスト）', mode: 'auto', input: '(x,(x,x))',
     text: 'S → (L) | x\nL → S | L,S' },
-  { name: 'ε規則を含む例（SLR(1)）', mode: 'char', input: 'aabb',
+  { name: 'ε規則を含む例（SLR(1)）', mode: 'auto', input: 'aabb',
     text: 'S → aSb | ε' },
-  { name: 'SLR(1)でない例（代入文）', mode: 'char', input: '*i=i',
+  { name: 'SLR(1)でない例（代入文）', mode: 'auto', input: '*i=i',
     text: 'S → L=R | R\nL → *R | i\nR → L' },
-  { name: '空白区切りの例（id を1記号に）', mode: 'space', input: 'id + id * id',
+  { name: '単語単位の例（id を1記号に）', mode: 'auto', input: 'id + id * id',
     text: 'E → E + T | T\nT → T * id | id' },
+  { name: 'if 文（ぶらさがり else・SLR(1)でない）', mode: 'auto', input: 'if (i) if (i) i := i ; else i := i ;',
+    text: 'S → if (E) S\nS → if (E) S else S\nS → i := E ;\nE → i' },
 ];
 
 /* ---------- 文法の読み込み ---------- */
@@ -252,10 +255,25 @@ const EXAMPLES = [
 function normalize(s) {
   return s.replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ');
 }
-function tokenize(s, mode) {
+// mode が char なら1文字1記号、word なら単語単位（if, else, := などを1記号に）
+// terms を渡すと、記号列（演算子の並び）を既知の終端記号で最長一致分割する
+const WORD_RE = /[A-Za-z0-9_\u0080-￿]+'*|[()\[\]{},;]|[^\sA-Za-z0-9_()\[\]{},;\u0080-￿]+/g;
+function tokenize(s, mode, terms) {
   s = normalize(s).trim();
-  if (mode === 'space') return s.split(/\s+/).filter(t => t && t !== 'ε');
   const out = [];
+  if (mode === 'word') {
+    for (const t of s.match(WORD_RE) || []) {
+      if (t === 'ε') continue;
+      if (!terms || terms.includes(t) || /^[A-Za-z0-9_\u0080-￿(){}\[\],;]/.test(t)) { out.push(t); continue; }
+      let i = 0;                                   // 例: "*-" を "*" と "-" に
+      while (i < t.length) {
+        let n = t.length - i; while (n > 1 && !terms.includes(t.substr(i, n))) n--;
+        if (n === 1 && !terms.includes(t[i])) { out.push(t.slice(i)); break; }
+        out.push(t.substr(i, n)); i += n;
+      }
+    }
+    return out;
+  }
   for (const ch of s.replace(/\s+/g, '')) {
     if (ch === "'" && out.length) out[out.length - 1] += ch;   // E' のようなプライム付き記号
     else if (ch !== 'ε') out.push(ch);
@@ -263,25 +281,28 @@ function tokenize(s, mode) {
   return out;
 }
 function parseGrammar(text, mode) {
-  const prods = []; let last = null;
+  const lines = []; let lastLhs = null;
   normalize(text).split(/\r?\n/).forEach((raw, ln) => {
     const line = raw.trim();
     if (!line) return;
-    let lhs, rhsText;
     const m = line.match(/^(.*?)(→|->|::=)(.*)$/);
-    if (m) {
-      const l = tokenize(m[1], mode);
-      if (l.length !== 1) throw new Error(`${ln + 1}行目: 左辺は非終端記号1つにしてください。`);
-      lhs = l[0]; rhsText = m[3];
-    } else if (line.startsWith('|') && last) { lhs = last; rhsText = line.slice(1); }
+    if (m) { lastLhs = m[1]; lines.push({ ln, lhs: m[1], alts: m[3].split('|') }); }
+    else if (line.startsWith('|') && lastLhs !== null) lines.push({ ln, lhs: lastLhs, alts: line.slice(1).split('|') });
     else throw new Error(`${ln + 1}行目: 「→」が見つかりません。`);
-    last = lhs;
-    for (const alt of rhsText.split('|')) {
+  });
+  // 自動判定: 右辺のどこかで記号が空白で区切られていれば単語単位、そうでなければ1文字1記号
+  if (mode === 'auto') mode = lines.some(l => l.alts.some(a => /\S\s+\S/.test(a.trim()))) ? 'word' : 'char';
+  const prods = [];
+  for (const { ln, lhs: lhsText, alts } of lines) {
+    const l = tokenize(lhsText, mode);
+    if (l.length !== 1) throw new Error(`${ln + 1}行目: 左辺は非終端記号1つにしてください。`);
+    const lhs = l[0];
+    for (const alt of alts) {
       const rhs = tokenize(alt, mode);
       if (lhs === EOF || rhs.includes(EOF)) throw new Error(`${ln + 1}行目: 「$」は入力の終わりを表す記号なので文法には使えません。`);
       if (!prods.some(p => p.lhs === lhs && p.rhs.join('\u0001') === rhs.join('\u0001'))) prods.push({ lhs, rhs });
     }
-  });
+  }
   if (!prods.length) throw new Error('文法規則を入力してください。');
   const nts = []; prods.forEach(p => { if (!nts.includes(p.lhs)) nts.push(p.lhs); });
   const start = nts[0];
@@ -292,7 +313,7 @@ function parseGrammar(text, mode) {
   const ntSet = new Set([aug, ...nts]);
   const terms = []; P.forEach(p => p.rhs.forEach(x => { if (!ntSet.has(x) && x !== EOF && !terms.includes(x)) terms.push(x); }));
   terms.push(EOF);
-  return { prods: P, nts: [aug, ...nts], terms, start, aug, isNT: x => ntSet.has(x), sep: mode === 'space' ? ' ' : '', mode };
+  return { prods: P, nts: [aug, ...nts], terms, start, aug, isNT: x => ntSet.has(x), sep: mode === 'word' ? ' ' : '', mode };
 }
 
 /* ---------- First / Follow ---------- */
@@ -536,7 +557,8 @@ function renderGrammarInfo() {
     <div class="hint">拡大文法（開始記号 ${symHTML(G.start)} に対して ${symHTML(G.aug)}→${symHTML(G.start)}$ を加え、入力の終わりを $ で表す）</div>
     <ol class="prods">${lis}</ol>
     <div class="kv" style="margin-top:8px"><b>非終端記号:</b> ${G.nts.map(esc).join(' ')}</div>
-    <div class="kv"><b>終端記号:</b> ${G.terms.map(esc).join(' ')}</div>`;
+    <div class="kv"><b>終端記号:</b> ${G.terms.map(esc).join(' ')}</div>
+    <div class="hint" style="margin-top:6px">記号の区切り: ${G.mode === 'word' ? '単語単位（英数字の並び・記号の並びをそれぞれ1記号、括弧と , ; は1文字で1記号）' : '1文字 = 1記号'}</div>`;
 }
 
 /* ---------- 2. 閉包の構成 ---------- */
@@ -642,7 +664,7 @@ function startParse() {
   stopAuto();
   el('parseError').textContent = '';
   pmode = document.querySelector('input[name=pmode]:checked').value;
-  let t = tokenize(el('parseInput').value, G.mode);
+  let t = tokenize(el('parseInput').value, G.mode, G.terms);
   if (t[t.length - 1] === EOF) t.pop();
   const bad = t.filter(x => !G.terms.includes(x) || x === EOF);
   if (bad.length) { el('parseError').textContent = `入力に文法の終端記号でない記号があります: ${[...new Set(bad)].join(' ')}`; el('parseBody').hidden = true; return; }
