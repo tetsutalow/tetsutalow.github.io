@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LR 構文解析の可視化：LR(0)・SLR(1)・LALR(1)・CLR(1)</title>
+<style>
+:root{
+  --bg:#faf8f6; --panel:#ffffff; --ink:#22201f; --sub:#6b6562; --line:#ddd6d1;
+  --accent:#8f1d2c; --accent-soft:#f6e9eb;
+  --complete:#d4202a; --inadequate:#1565c0;
+  --node:#fbd9dc; --stack:#ffd34d; --top:#ff9a1f; --path:#f0a400;
+  --ok:#1b7f4b; --ng:#c62828;
+  --mono:"Cascadia Mono","Consolas","Menlo","BIZ UDGothic","MS Gothic",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Hiragino Sans","Yu Gothic UI","Meiryo","Noto Sans JP",sans-serif;line-height:1.6;font-size:15px}
+header{background:var(--accent);color:#fff;padding:18px 24px}
+header h1{margin:0;font-size:22px;font-weight:600;letter-spacing:.02em}
+header p{margin:4px 0 0;font-size:13px;opacity:.85}
+main{max-width:1320px;margin:0 auto;padding:16px 16px 80px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin-top:16px}
+section>h2{margin:0 0 10px;font-size:17px;color:var(--accent);display:flex;align-items:baseline;gap:10px}
+section>h2 .num{background:var(--accent);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;
+  align-items:center;justify-content:center;font-size:13px;flex:none;transform:translateY(-1px)}
+.hint{color:var(--sub);font-size:13px}
+.mono,.item,.sym{font-family:var(--mono)}
+textarea,input[type=text],select{font-family:var(--mono);font-size:15px;border:1px solid #bdb5af;border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+textarea{width:100%;min-height:128px;resize:vertical;line-height:1.5}
+button{font:inherit;border:1px solid #bdb5af;background:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;color:var(--ink)}
+button:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover:not(:disabled){background:#a82536}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.grid2{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,1fr);gap:20px}
+.error{color:var(--ng);font-weight:600;margin-top:8px;white-space:pre-wrap}
+.controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+.controls .count{font-family:var(--mono);color:var(--sub);margin:0 6px;font-size:13px}
+.explain{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:4px;padding:8px 12px;margin:8px 0;min-height:42px}
+.explain.warn{background:#e8f0fb;border-left-color:var(--inadequate)}
+.explain.ok{background:#e6f4ec;border-left-color:var(--ok)}
+.explain.ng{background:#fdeaea;border-left-color:var(--ng)}
+.explain button{margin:4px 6px 0 0;font-size:14px}
+
+/* 文法 */
+ol.prods{margin:0;padding-left:0;list-style:none;font-family:var(--mono)}
+ol.prods li{padding:1px 0}
+ol.prods .no{display:inline-block;width:2.4em;color:var(--sub)}
+ol.prods li.aug{color:var(--accent);font-weight:600}
+.kv{font-family:var(--mono);margin:2px 0}
+.kv b{font-family:inherit;color:var(--sub);font-weight:500}
+
+/* 項 */
+.item{white-space:nowrap}
+.item.complete{color:var(--complete);font-weight:600}
+.item .dot{color:var(--accent);font-weight:700;padding:0 1px}
+.item.complete .dot{color:var(--complete)}
+.st{font-family:var(--mono);font-style:italic;white-space:nowrap}
+.st sub{font-style:italic;font-size:.72em}
+.st.inad{color:var(--inadequate);font-weight:700}
+
+/* 閉包カード */
+.split{display:grid;grid-template-columns:minmax(380px,1.15fr) minmax(320px,1fr);gap:18px;align-items:start}
+.diagram-wrap{position:sticky;top:8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+svg.diagram{display:block;width:100%;height:auto;max-height:78vh;touch-action:none;user-select:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--sub);padding:6px 10px;border-top:1px solid var(--line)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:4px;background:var(--node);border:1px solid #444}
+.legend i.c{border:3px solid var(--complete)} .legend i.s{background:var(--stack)} .legend i.t{background:var(--top)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.card{border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:#fff;font-size:14px;transition:box-shadow .2s}
+.card .head{font-family:var(--mono);font-size:13px;color:var(--sub);border-bottom:1px dashed var(--line);margin-bottom:3px;padding-bottom:2px}
+.card .head .st{font-size:15px;color:var(--ink)}
+.card .head .st.inad{color:var(--inadequate)}
+.card .item{display:block}
+.card .item.nk{padding-left:.6em;opacity:.82}
+.card.cur{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.card.src{border-color:var(--path)}
+.card.flash{animation:flash 1s}
+@keyframes flash{0%{background:#fff3c4}100%{background:#fff}}
+
+/* 判定 */
+table{border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--line);padding:4px 10px;text-align:left;vertical-align:top}
+th{background:#f3eeeb;font-weight:600;white-space:nowrap}
+.verdicts{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 12px}
+.verdict{border-radius:6px;padding:6px 14px;font-weight:600;border:1px solid}
+.verdict.ok{color:var(--ok);background:#e6f4ec;border-color:#b5dcc5}
+.verdict.ng{color:var(--ng);background:#fdeaea;border-color:#f1bcbc}
+.tag{display:inline-block;border-radius:4px;padding:0 6px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.tag.ok{background:#e6f4ec;color:var(--ok)} .tag.ng{background:#fdeaea;color:var(--ng)} .tag.bl{background:#e8f0fb;color:var(--inadequate)}
+.tblwrap{overflow-x:auto}
+
+/* 構文解析 */
+.shelfbox{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
+.shelfbox h3{margin:0 0 4px;font-size:13px;color:var(--sub);font-weight:600}
+.shelf{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch;border-left:5px solid #7a6f69;border-bottom:5px solid #7a6f69;
+  border-top:5px solid #7a6f69;padding:6px 8px;min-height:48px;border-radius:4px 0 0 4px;background:#fbf7f2}
+.shelf .cell{font-family:var(--mono);font-size:17px;padding:3px 7px;border-radius:4px;display:flex;align-items:center}
+.shelf .cell.state{background:var(--stack);border:1px solid #c79a00}
+.shelf .cell.state.top{background:var(--top);border-color:#c86a00;font-weight:700}
+.shelf .cell.symb{background:#fff;border:1px solid #bdb5af;font-weight:700}
+.shelf .cell.handle{box-shadow:0 3px 0 var(--complete);border-color:var(--complete)}
+.shelf .cell.new{animation:pop .35s}
+@keyframes pop{0%{transform:translateY(-10px);opacity:0}100%{transform:none;opacity:1}}
+.inputline{font-family:var(--mono);font-size:19px;letter-spacing:.06em;padding:4px 2px;min-height:36px}
+.inputline .used{color:#b9b0aa}
+.inputline .look{background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px;margin:0 2px}
+.inputline .mark{color:var(--accent);font-weight:700}
+table.trace{width:100%;font-family:var(--mono)}
+table.trace td{white-space:nowrap}
+table.trace td.in{text-align:right}
+table.trace td.act{font-family:inherit;white-space:normal}
+table.trace tr.cur td{background:#fff6da}
+table.trace tr.cur td.act{color:var(--sub)}
+table.trace .acc{color:var(--complete);font-weight:700}
+table.trace .bang{color:var(--inadequate);font-weight:700}
+.tracewrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:6px;margin-top:10px}
+.tracewrap table{border:none} .tracewrap th{position:sticky;top:0}
+label.radio{display:inline-flex;gap:4px;align-items:center;cursor:pointer}
+#parseInput{width:260px}
+@media (max-width:900px){.split,.grid2{grid-template-columns:1fr}.diagram-wrap{position:static}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.item .la{color:#5b6b7a;font-weight:400}
+.cards.wide{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:2px solid var(--accent);margin-bottom:4px}
+.tab{border-radius:6px 6px 0 0;border-bottom:none;padding:6px 14px;font-weight:600;text-align:left;line-height:1.3}
+.tab small{display:block;font-weight:400;font-size:11.5px;color:var(--sub)}
+.tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tab.on small{color:#f3d9dd}
+.tab.on:hover{background:var(--accent)}
+.legend i.d{background:#cfe6d4}
+</style>
+</head>
+<body>
+<header>
+  <h1>LR 構文解析の可視化：LR(0)・SLR(1)・LALR(1)・CLR(1)</h1>
+  <p>文法 → 閉包（LR(0)項・LR(1)項）→ 状態遷移図 → 4方式の判定 → 状態遷移図と「棚」による構文解析</p>
+</header>
+<main>
+
+<section id="secGrammar">
+  <h2><span class="num">1</span>文法の入力</h2>
+  <div class="grid2">
+    <div>
+      <div class="row" style="margin-bottom:6px">
+        <label>例:
+          <select id="examples"></select>
+        </label>
+        <label>記号の区切り:
+          <select id="tokMode">
+            <option value="auto">自動（空白区切りなら単語単位）</option>
+            <option value="char">1文字 = 1記号</option>
+            <option value="word">単語単位</option>
+          </select>
+        </label>
+      </div>
+      <textarea id="grammar" spellcheck="false" aria-label="文法"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="btnBuild">閉包と状態遷移図を作る</button>
+        <span class="hint">1行に1規則。<span class="mono">→</span> は <span class="mono">-&gt;</span> でも可、選択は <span class="mono">|</span>、空列は <span class="mono">ε</span>。左辺に現れる記号が非終端記号、最初の規則の左辺が開始記号。右辺の記号を空白で区切ると <span class="mono">if</span> <span class="mono">else</span> <span class="mono">:=</span> のような単語が1つの記号になります。</span>
+      </div>
+      <div class="error" id="grammarError" role="alert"></div>
+    </div>
+    <div id="grammarInfo"></div>
+  </div>
+</section>
+
+<section id="secAutomaton" hidden>
+  <h2><span class="num">2</span>閉包（Closure）と状態遷移図</h2>
+  <div class="tabs" role="tablist">
+    <button class="tab" data-tab="lr0" role="tab">LR(0) 状態遷移図<small>LR(0)・SLR(1) で使う</small></button>
+    <button class="tab" data-tab="clr" role="tab">CLR(1) 状態遷移図<small>先読みつきの LR(1)項</small></button>
+    <button class="tab" data-tab="lalr" role="tab">LALR(1)<small>CLR(1) の状態をまとめる</small></button>
+  </div>
+  <div class="controls">
+    <button id="cFirst" title="最初へ">⏮ 最初</button>
+    <button id="cPrev" title="前へ">◀ 前</button>
+    <button id="cNext" class="primary" title="次へ">次 ▶</button>
+    <button id="cLast" title="最後へ">最後 ⏭</button>
+    <span class="count" id="cCount"></span>
+    <span class="hint" id="cHint"></span>
+  </div>
+  <div class="explain" id="cExplain"></div>
+  <div class="split">
+    <div class="diagram-wrap">
+      <svg class="diagram" id="diagram1" role="img" aria-label="状態遷移図"></svg>
+      <div class="legend"><span><i class="c"></i>完全項を含む閉包</span><span><b style="color:var(--inadequate)">青字</b> 競合のある（不都合な）状態</span><span id="lgLalr" hidden><i class="t"></i>いま まとめる状態　<i class="d"></i>まとめ済み</span><span>丸はドラッグで動かせます／クリックで閉包を表示</span></div>
+    </div>
+    <div class="cards" id="cards"></div>
+  </div>
+</section>
+
+<section id="secJudge" hidden>
+  <h2><span class="num">3</span>LR(0)・SLR(1)・LALR(1)・CLR(1) 文法の判定</h2>
+  <div id="judge"></div>
+</section>
+
+<section id="secParse" hidden>
+  <h2><span class="num">4</span>構文解析（状態遷移図と棚）</h2>
+  <div class="row">
+    <label>入力: <input type="text" id="parseInput" spellcheck="false" aria-label="入力文字列"></label>
+    <label class="radio"><input type="radio" name="pmode" value="lr0"> LR(0)</label>
+    <label class="radio"><input type="radio" name="pmode" value="slr" checked> SLR(1)</label>
+    <label class="radio"><input type="radio" name="pmode" value="lalr"> LALR(1)</label>
+    <label class="radio"><input type="radio" name="pmode" value="clr"> CLR(1)</label>
+    <button class="primary" id="pStart">解析開始</button>
+  </div>
+  <div class="hint" id="pModeHint" style="margin-top:4px"></div>
+  <div class="error" id="parseError" role="alert"></div>
+  <div id="parseBody" hidden>
+    <div class="controls">
+      <button id="pFirst">⏮ 最初</button>
+      <button id="pPrev">◀ 前</button>
+      <button id="pNext" class="primary">次 ▶</button>
+      <button id="pLast">最後 ⏭</button>
+      <button id="pAuto">▶ 自動再生</button>
+      <span class="count" id="pCount"></span>
+    </div>
+    <div class="explain" id="pExplain"></div>
+    <div class="split">
+      <div class="diagram-wrap">
+        <svg class="diagram" id="diagram2" role="img" aria-label="構文解析中の状態遷移図"></svg>
+        <div class="legend"><span><i class="t"></i>現在の状態（棚の一番上）</span><span><i class="s"></i>棚に積まれている状態</span><span><i class="c"></i>完全項を含む閉包</span></div>
+      </div>
+      <div>
+        <div class="shelfbox">
+          <h3>棚（左が底、右が一番上）</h3>
+          <div class="shelf" id="shelf"></div>
+          <h3 style="margin-top:10px">入力</h3>
+          <div class="inputline" id="inputLine"></div>
+          <h3 style="margin-top:6px">現在の状態の閉包</h3>
+          <div id="curState"></div>
+        </div>
+        <div class="tracewrap">
+          <table class="trace" id="trace"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+'use strict';
+/* =====================================================================
+ *  LR 構文解析の可視化：LR(0)・SLR(1)・LALR(1)・CLR(1)
+ *  (ライブラリ不使用・JavaScript のみ)
+ * ===================================================================== */
+const EOF = '$';
+const el = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const EXAMPLES = [
+  { name: '式の文法（講義資料の例・SLR(1)）', mode: 'auto', input: 'i+i*i',
+    text: 'E → E+T | T\nT → T*F | F\nF → (E) | i' },
+  { name: 'LR(0)文法の例（リスト）', mode: 'auto', input: '(x,(x,x))',
+    text: 'S → (L) | x\nL → S | L,S' },
+  { name: 'ε規則を含む例（SLR(1)）', mode: 'auto', input: 'aabb',
+    text: 'S → aSb | ε' },
+  { name: '代入文（SLR(1)でないが LALR(1)）', mode: 'auto', input: '*i=i',
+    text: 'S → L=R | R\nL → *R | i\nR → L' },
+  { name: 'CLR(1) だが LALR(1) でない例', mode: 'auto', input: 'acd',
+    text: 'S → aAd | bBd | aBe | bAe\nA → c\nB → c' },
+  { name: 'if 文（ぶらさがり else・CLR(1) でもない）', mode: 'auto', input: 'if (i) if (i) i := i ; else i := i ;',
+    text: 'S → if (E) S\nS → if (E) S else S\nS → i := E ;\nE → i' },
+  { name: '単語単位の例（id を1記号に）', mode: 'auto', input: 'id + id * id',
+    text: 'E → E + T | T\nT → T * id | id' },
+];
+
+/* ---------- 文法の読み込み ---------- */
+// 全角英数記号を半角に（＊ → *, （ → ( など）
+function normalize(s) {
+  return s.replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ');
+}
+// mode が char なら1文字1記号、word なら単語単位（if, else, := などを1記号に）
+// terms を渡すと、記号列（演算子の並び）を既知の終端記号で最長一致分割する
+const WORD_RE = /[A-Za-z0-9_\u0080-￿]+'*|[()\[\]{},;]|[^\sA-Za-z0-9_()\[\]{},;\u0080-￿]+/g;
+function tokenize(s, mode, terms) {
+  s = normalize(s).trim();
+  const out = [];
+  if (mode === 'word') {
+    for (const t of s.match(WORD_RE) || []) {
+      if (t === 'ε') continue;
+      if (!terms || terms.includes(t) || /^[A-Za-z0-9_\u0080-￿(){}\[\],;]/.test(t)) { out.push(t); continue; }
+      let i = 0;                                   // 例: "*-" を "*" と "-" に
+      while (i < t.length) {
+        let n = t.length - i; while (n > 1 && !terms.includes(t.substr(i, n))) n--;
+        if (n === 1 && !terms.includes(t[i])) { out.push(t.slice(i)); break; }
+        out.push(t.substr(i, n)); i += n;
+      }
+    }
+    return out;
+  }
+  for (const ch of s.replace(/\s+/g, '')) {
+    if (ch === "'" && out.length) out[out.length - 1] += ch;   // E' のようなプライム付き記号
+    else if (ch !== 'ε') out.push(ch);
+  }
+  return out;
+}
+function parseGrammar(text, mode) {
+  const lines = []; let lastLhs = null;
+  normalize(text).split(/\r?\n/).forEach((raw, ln) => {
+    const line = raw.trim();
+    if (!line) return;
+    const m = line.match(/^(.*?)(→|->|::=)(.*)$/);
+    if (m) { lastLhs = m[1]; lines.push({ ln, lhs: m[1], alts: m[3].split('|') }); }
+    else if (line.startsWith('|') && lastLhs !== null) lines.push({ ln, lhs: lastLhs, alts: line.slice(1).split('|') });
+    else throw new Error(`${ln + 1}行目: 「→」が見つかりません。`);
+  });
+  // 自動判定: 右辺のどこかで記号が空白で区切られていれば単語単位、そうでなければ1文字1記号
+  if (mode === 'auto') mode = lines.some(l => l.alts.some(a => /\S\s+\S/.test(a.trim()))) ? 'word' : 'char';
+  const prods = [];
+  for (const { ln, lhs: lhsText, alts } of lines) {
+    const l = tokenize(lhsText, mode);
+    if (l.length !== 1) throw new Error(`${ln + 1}行目: 左辺は非終端記号1つにしてください。`);
+    const lhs = l[0];
+    for (const alt of alts) {
+      const rhs = tokenize(alt, mode);
+      if (lhs === EOF || rhs.includes(EOF)) throw new Error(`${ln + 1}行目: 「$」は入力の終わりを表す記号なので文法には使えません。`);
+      if (!prods.some(p => p.lhs === lhs && p.rhs.join('\u0001') === rhs.join('\u0001'))) prods.push({ lhs, rhs });
+    }
+  }
+  if (!prods.length) throw new Error('文法規則を入力してください。');
+  const nts = []; prods.forEach(p => { if (!nts.includes(p.lhs)) nts.push(p.lhs); });
+  const start = nts[0];
+  const all = new Set(nts); prods.forEach(p => p.rhs.forEach(x => all.add(x)));
+  let aug = start + "'"; while (all.has(aug)) aug += "'";
+  // 拡大文法: 規則0 として  S' → S $  を加える
+  const P = [{ lhs: aug, rhs: [start, EOF] }, ...prods];
+  const ntSet = new Set([aug, ...nts]);
+  const terms = []; P.forEach(p => p.rhs.forEach(x => { if (!ntSet.has(x) && x !== EOF && !terms.includes(x)) terms.push(x); }));
+  terms.push(EOF);
+  return { prods: P, nts: [aug, ...nts], terms, start, aug, isNT: x => ntSet.has(x), sep: mode === 'word' ? ' ' : '', mode };
+}
+
+/* ---------- First / Follow ---------- */
+function computeFollow(G) {
+  const nullable = new Set(), first = {}, follow = {};
+  G.nts.forEach(n => { first[n] = new Set(); follow[n] = new Set(); });
+  const firstOf = x => G.isNT(x) ? first[x] : new Set([x]);
+  let ch = true;
+  while (ch) {
+    ch = false;
+    for (const p of G.prods) {
+      let allNull = true;
+      for (const x of p.rhs) {
+        for (const t of firstOf(x)) if (!first[p.lhs].has(t)) { first[p.lhs].add(t); ch = true; }
+        if (!(G.isNT(x) && nullable.has(x))) { allNull = false; break; }
+      }
+      if (allNull && !nullable.has(p.lhs)) { nullable.add(p.lhs); ch = true; }
+    }
+  }
+  ch = true;
+  while (ch) {
+    ch = false;
+    for (const p of G.prods) {
+      for (let i = 0; i < p.rhs.length; i++) {
+        const B = p.rhs[i]; if (!G.isNT(B)) continue;
+        let restNull = true;
+        for (let j = i + 1; j < p.rhs.length; j++) {
+          const x = p.rhs[j];
+          for (const t of firstOf(x)) if (!follow[B].has(t)) { follow[B].add(t); ch = true; }
+          if (!(G.isNT(x) && nullable.has(x))) { restNull = false; break; }
+        }
+        if (restNull) for (const t of follow[p.lhs]) if (!follow[B].has(t)) { follow[B].add(t); ch = true; }
+      }
+    }
+  }
+  return { nullable, first, follow };
+}
+
+/* ---------- LR(0)項集合 / LR(1)項集合 と正準オートマトン ---------- */
+// 項は { p:規則番号, d:注目点の位置, la:先読み記号の集合 }。useLA=false なら LR(0)項（la は空のまま）
+const ck = it => it.p + ',' + it.d;
+function buildAutomaton(G, FF, useLA) {
+  const P = G.prods;
+  // First(βa): 記号列 β の First。β が空列になりうるなら先読み la を加える
+  const firstSeq = (seq, la) => {
+    const o = new Set();
+    for (const x of seq) {
+      if (!G.isNT(x)) { o.add(x); return o; }
+      FF.first[x].forEach(t => o.add(t));
+      if (!FF.nullable.has(x)) return o;
+    }
+    la.forEach(t => o.add(t)); return o;
+  };
+  const closure = kernel => {
+    const items = kernel.map(k => ({ p: k.p, d: k.d, la: new Set(k.la) })), idx = new Map(items.map((it, i) => [ck(it), i]));
+    let ch = true;
+    while (ch) {
+      ch = false;
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i], X = P[it.p].rhs[it.d];
+        if (X === undefined || !G.isNT(X)) continue;
+        const la = useLA ? firstSeq(P[it.p].rhs.slice(it.d + 1), it.la) : null;
+        P.forEach((q, qi) => {
+          if (q.lhs !== X) return;
+          let j = idx.get(qi + ',0');
+          if (j === undefined) { j = items.length; idx.set(qi + ',0', j); items.push({ p: qi, d: 0, la: new Set() }); ch = true; }
+          if (la) for (const t of la) if (!items[j].la.has(t)) { items[j].la.add(t); ch = true; }
+        });
+      }
+    }
+    return items;
+  };
+  const coreKey = kernel => kernel.map(ck).sort().join(' ');
+  const kkey = kernel => useLA ? kernel.map(k => ck(k) + ':' + [...k.la].sort().join('\u0001')).sort().join(' ') : coreKey(kernel);
+  const states = [], index = new Map(), steps = [];
+  const add = (kernel, from) => {
+    const s = { id: states.length, kernelKeys: new Set(kernel.map(ck)), coreKey: coreKey(kernel), items: closure(kernel), trans: new Map(), from };
+    states.push(s); index.set(kkey(kernel), s.id); return s;
+  };
+  const gotoStep = (s, X) => {
+    const kernel = s.items.filter(it => P[it.p].rhs[it.d] === X).map(it => ({ p: it.p, d: it.d + 1, la: it.la }));
+    const k = kkey(kernel); let to = index.get(k); const isNew = to === undefined;
+    if (isNew) to = add(kernel, { state: s.id, sym: X }).id;
+    s.trans.set(X, to);
+    steps.push({ type: 'goto', from: s.id, sym: X, to, isNew });
+  };
+  const symsOf = s => { const o = []; s.items.forEach(it => { const X = P[it.p].rhs[it.d]; if (X !== undefined && !o.includes(X)) o.push(X); }); return o; };
+  add([{ p: 0, d: 0, la: new Set() }], null); steps.push({ type: 'init', to: 0, isNew: true });
+  for (let i = 0; i < states.length; i++) for (const X of symsOf(states[i])) if (X !== EOF) gotoStep(states[i], X);
+  // $ による遷移（受理直前の閉包）は講義資料に合わせて最後に番号を振る
+  for (let i = 0; i < states.length; i++) if (symsOf(states[i]).includes(EOF)) gotoStep(states[i], EOF);
+  steps.forEach((st, i) => { if (st.isNew) states[st.to].bornAt = i; });
+  const info = states.map(s => {
+    const completes = s.items.filter(it => it.d === P[it.p].rhs.length);
+    const shiftT = []; s.items.forEach(it => { const X = P[it.p].rhs[it.d]; if (X !== undefined && !G.isNT(X) && !shiftT.includes(X)) shiftT.push(X); });
+    const sr = completes.length > 0 && shiftT.length > 0, rr = completes.length > 1;
+    return { completes, shiftT, sr, rr, inadequate: sr || rr };
+  });
+  return { states, steps, info, useLA };
+}
+
+let G = null, FF = null, A0 = null, A1 = null, AN = null;   // 文法・First/Follow・LR(0)オートマトン・LR(1)オートマトン・判定結果
+
+// LALR(1): CLR(1) の状態のうち、先読みを除いた部分（核）が同じものをまとめる。
+// まとめた結果は LR(0) の状態と1対1に対応するので、LR(0) の各状態に先読み集合 lalr を付ける。
+function mergeLALR() {
+  const byCore = new Map(A0.states.map(s => [s.coreKey, s]));
+  A0.states.forEach(s => { s.group = []; s.lalr = new Map(s.items.map(it => [ck(it), new Set()])); });
+  A1.states.forEach(s => {
+    const t = byCore.get(s.coreKey); s.core = t.id; t.group.push(s.id);
+    s.items.forEach(it => it.la.forEach(a => t.lalr.get(ck(it)).add(a)));
+  });
+}
+// 方式ごとの「この完全項を還元してよい先読み記号の集合」
+function laOf(method, s, it) {
+  if (method === 'slr') return FF.follow[G.prods[it.p].lhs];
+  if (method === 'lalr') return s.lalr.get(ck(it));
+  return it.la;                                   // clr
+}
+const autOf = method => method === 'clr' ? A1 : A0;
+function conflictsFor(method) {
+  const AUT = autOf(method);
+  return AUT.states.map(s => {
+    const inf = AUT.info[s.id], tbl = new Map();
+    inf.shiftT.forEach(t => tbl.set(t, { shift: true, reds: [] }));
+    inf.completes.forEach(c => {
+      if (c.p === 0) return;
+      for (const a of laOf(method, s, c)) { if (!tbl.has(a)) tbl.set(a, { shift: false, reds: [] }); tbl.get(a).reds.push(c); }
+    });
+    return [...tbl].filter(([, e]) => (e.shift ? 1 : 0) + e.reds.length > 1).map(([sym, e]) => ({ sym, shift: e.shift, reds: e.reds }));
+  });
+}
+function analyze() {
+  const slr = conflictsFor('slr'), lalr = conflictsFor('lalr'), clr = conflictsFor('clr');
+  A1.info.forEach((inf, i) => { inf.inadequate = clr[i].length > 0; });
+  const none = c => c.every(x => !x.length);
+  return { slr, lalr, clr, isLR0: A0.info.every(x => !x.inadequate), isSLR: none(slr), isLALR: none(lalr), isCLR: none(clr) };
+}
+
+/* ---------- 表示用の部品 ---------- */
+const symsHTML = syms => syms.map(esc).join(G.sep);
+// その方式で競合が残る（不都合な）状態か
+const inad = (method, id) => method === 'lr0' ? A0.info[id].inadequate : AN[method][id].length > 0;
+const stHTML = (method, id) => `<span class="st ${inad(method, id) ? 'inad' : ''}">I<sub>${id}</sub></span>`;
+const stPlain = id => `<span class="st">I<sub>${id}</sub></span>`;
+const sortTerms = set => [...set].sort((a, b) => G.terms.indexOf(a) - G.terms.indexOf(b));
+const setHTML = set => '{' + sortTerms(set).map(esc).join(', ') + '}';
+// la: 表示する先読み集合（省略または空なら LR(0)項として表示）
+function itemHTML(it, extra = '', la = null) {
+  const p = G.prods[it.p], complete = it.d === p.rhs.length;
+  const a = symsHTML(p.rhs.slice(0, it.d)), b = symsHTML(p.rhs.slice(it.d));
+  const l = la && la.size ? `<span class="la">, ${setHTML(la)}</span>` : '';
+  return `<span class="item ${complete ? 'complete' : ''} ${extra}">${esc(p.lhs)}→${a}<span class="dot">・</span>${b}${l}</span>`;
+}
+function itemText(it, la) {
+  const p = G.prods[it.p];
+  return `${p.lhs}→${p.rhs.slice(0, it.d).join(G.sep)}・${p.rhs.slice(it.d).join(G.sep)}` + (la && la.size ? `, {${sortTerms(la).join(',')}}` : '');
+}
+const prodHTML = p => `${esc(p.lhs)}→${p.rhs.length ? symsHTML(p.rhs) : 'ε'}`;
+const symHTML = x => `<span class="sym">${esc(x)}</span>`;
+// 状態 s の項を表示するときの先読み集合（kind: 'lr0' | 'lalr' | 'clr'）
+const shownLA = (kind, s, it) => kind === 'clr' ? it.la : kind === 'lalr' ? s.lalr.get(ck(it)) : null;
+function cardHTML(method, kind, s, head, cls = '', style = '') {
+  return `<div class="card ${cls}" data-id="${s.id}" style="${style}"><div class="head">${head}${stHTML(method, s.id)} ＝ {</div>` +
+    s.items.map(it => itemHTML(it, s.kernelKeys.has(ck(it)) ? '' : 'nk', shownLA(kind, s, it))).join('') +
+    `<div class="head" style="border:none;margin:0;padding:0">}</div></div>`;
+}
+
+/* ---------- 状態遷移図（SVG・自動配置） ---------- */
+const R = 22;
+function layout(AUT) {
+  const n = AUT.states.length, layer = new Array(n).fill(-1); layer[0] = 0;
+  const q = [0];
+  while (q.length) { const u = q.shift(); for (const v of AUT.states[u].trans.values()) if (layer[v] < 0) { layer[v] = layer[u] + 1; q.push(v); } }
+  const layers = []; layer.forEach((l, i) => (layers[l] = layers[l] || []).push(i));
+  const rank = new Array(n).fill(0);
+  layers.forEach((L, li) => {
+    if (li > 0) {
+      const bc = v => { const ps = AUT.states.filter(s => layer[s.id] === li - 1 && [...s.trans.values()].includes(v)).map(s => rank[s.id]); return ps.reduce((a, b) => a + b, 0) / (ps.length || 1); };
+      const key = new Map(L.map(v => [v, bc(v)]));
+      L.sort((a, b) => key.get(a) - key.get(b) || a - b);
+    }
+    L.forEach((v, i) => rank[v] = i - (L.length - 1) / 2);
+  });
+  const DX = 170, DY = 104;
+  AUT.pos = AUT.states.map(s => ({ x: layer[s.id] * DX, y: rank[s.id] * DY }));
+  fitView(AUT);
+}
+function fitView(AUT) {
+  const xs = AUT.pos.map(p => p.x), ys = AUT.pos.map(p => p.y), pad = 90;
+  const x0 = Math.min(...xs) - pad, y0 = Math.min(...ys) - pad;
+  AUT.viewBox = [x0, y0, Math.max(...xs) + pad - x0, Math.max(...ys) + pad - y0];
+}
+const qpt = (a, c, b, t) => ({ x: (1 - t) * (1 - t) * a.x + 2 * t * (1 - t) * c.x + t * t * b.x, y: (1 - t) * (1 - t) * a.y + 2 * t * (1 - t) * c.y + t * t * b.y });
+function edgeGeom(AUT, u, v) {
+  const pos = AUT.pos, a = pos[u], b = pos[v];
+  if (u === v) {     // 自己ループは周りが一番空いている向きに出す
+    let th = -Math.PI / 2, bestC = -1;
+    for (let k = 0; k < 12; k++) {
+      const t = -Math.PI / 2 + k * Math.PI / 6, q = { x: a.x + Math.cos(t) * 70, y: a.y + Math.sin(t) * 70 };
+      let c = Infinity; pos.forEach((o, i) => { if (i !== u) c = Math.min(c, Math.hypot(q.x - o.x, q.y - o.y)); });
+      if (c > bestC + 1) { bestC = c; th = t; }
+    }
+    const P = (r, t) => `${(a.x + r * Math.cos(t)).toFixed(1)},${(a.y + r * Math.sin(t)).toFixed(1)}`;
+    return { d: `M${P(R, th - .5)} C${P(84, th - .55)} ${P(84, th + .55)} ${P(R + 4, th + .5)}`, lx: a.x + 70 * Math.cos(th), ly: a.y + 70 * Math.sin(th) };
+  }
+  const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d;
+  const reverse = [...AUT.states[v].trans.values()].includes(u);
+  const base = reverse ? [.16, .3, .45, -.3, .6] : [0, .14, -.14, .28, -.28, .42, -.42, .58, -.58];
+  let best = null;
+  for (const f of base) {     // 他の丸を横切らない曲がり具合を選ぶ
+    const c = { x: (a.x + b.x) / 2 + nx * d * f, y: (a.y + b.y) / 2 + ny * d * f };
+    let clear = Infinity;
+    for (let t = .08; t < .93; t += .06) {
+      const p = qpt(a, c, b, t);
+      pos.forEach((o, i) => { if (i !== u && i !== v) clear = Math.min(clear, Math.hypot(p.x - o.x, p.y - o.y)); });
+    }
+    if (!best || (clear > best.clear && best.clear < R + 10)) best = { c, clear };
+    if (best.clear >= R + 10) break;
+  }
+  const c = best.c;
+  const trim = (p, r) => { const ex = c.x - p.x, ey = c.y - p.y, l = Math.hypot(ex, ey) || 1; return { x: p.x + ex / l * r, y: p.y + ey / l * r }; };
+  const straight = Math.hypot(c.x - (a.x + b.x) / 2, c.y - (a.y + b.y) / 2) < 1;
+  const p0 = straight ? { x: a.x + dx / d * R, y: a.y + dy / d * R } : trim(a, R);
+  const p1 = straight ? { x: b.x - dx / d * (R + 4), y: b.y - dy / d * (R + 4) } : trim(b, R + 4);
+  const m = qpt(p0, c, p1, .5);
+  return { d: `M${p0.x.toFixed(1)},${p0.y.toFixed(1)} Q${c.x.toFixed(1)},${c.y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)}`, lx: m.x, ly: m.y };
+}
+/* o = { method 青字（競合）の判定に使う方式, kind 項の表示方法, states:Set|null 表示する状態, edges:Set|null 表示する辺("from|sym"),
+ *       fill:Map(id→'top'|'stack'|'done'), hiEdges:Set("from|sym"), ring:Set(id) 強調リング } */
+const FILL = { top: '#ff9a1f', stack: '#ffd34d', done: '#cfe6d4' };
+function drawDiagram(svg, AUT, o) {
+  const id = svg.id, pos = AUT.pos;
+  svg._aut = AUT;
+  let h = `<defs>
+    <marker id="${id}-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker>
+    <marker id="${id}-arh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e08e00"/></marker>
+  </defs>`;
+  let edges = '', labels = '';
+  AUT.states.forEach(s => s.trans.forEach((to, sym) => {
+    const key = s.id + '|' + sym;
+    if (o.edges && !o.edges.has(key)) return;
+    const g = edgeGeom(AUT, s.id, to), hi = o.hiEdges && o.hiEdges.has(key);
+    edges += `<path d="${g.d}" fill="none" stroke="${hi ? '#f0a400' : '#222'}" stroke-width="${hi ? 4 : 1.6}" marker-end="url(#${id}-${hi ? 'arh' : 'ar'})"/>`;
+    labels += `<text x="${g.lx.toFixed(1)}" y="${(g.ly + 5).toFixed(1)}" text-anchor="middle" font-size="16" font-weight="700" fill="${hi ? '#b36b00' : '#222'}" stroke="#fff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">${esc(sym)}</text>`;
+  }));
+  let nodes = '';
+  AUT.states.forEach(s => {
+    if (o.states && !o.states.has(s.id)) return;
+    const p = pos[s.id], inf = AUT.info[s.id], f = o.fill && o.fill.get(s.id);
+    const title = `I${s.id} = { ${s.items.map(it => itemText(it, shownLA(o.kind, s, it))).join(' ， ')} }`;
+    nodes += `<g data-id="${s.id}" style="cursor:grab">
+      <title>${esc(title)}</title>
+      ${o.ring && o.ring.has(s.id) ? `<circle cx="${p.x}" cy="${p.y}" r="${R + 8}" fill="none" stroke="#8f1d2c" stroke-width="2.5" stroke-dasharray="5 4"/>` : ''}
+      <circle cx="${p.x}" cy="${p.y}" r="${R}" fill="${FILL[f] || '#fbd9dc'}" stroke="${inf.completes.length ? '#e0101c' : '#333'}" stroke-width="${inf.completes.length ? 4 : 1.3}"/>
+      <text x="${p.x}" y="${p.y + 6}" text-anchor="middle" font-size="${s.id > 99 ? 15 : 19}" font-style="italic" font-weight="${f === 'top' ? 700 : 500}" fill="${inad(o.method, s.id) ? '#1565c0' : '#111'}" pointer-events="none">I<tspan dy="5" font-size="12.5">${s.id}</tspan></text>
+    </g>`;
+  });
+  svg.setAttribute('viewBox', AUT.viewBox.join(' '));
+  svg.style.fontFamily = 'Consolas, Menlo, "BIZ UDGothic", monospace';
+  svg.innerHTML = h + edges + labels + nodes;
+}
+function enableDrag(svg, redraw) {
+  let drag = null;
+  const pt = e => { const m = svg.getScreenCTM().inverse(); return { x: e.clientX * m.a + e.clientY * m.c + m.e, y: e.clientX * m.b + e.clientY * m.d + m.f }; };
+  svg.addEventListener('pointerdown', e => {
+    const g = e.target.closest('g[data-id]'); if (!g || !svg._aut) return;
+    const id = +g.dataset.id, p = pt(e), pos = svg._aut.pos;
+    drag = { id, ox: pos[id].x - p.x, oy: pos[id].y - p.y, moved: false, sx: e.clientX, sy: e.clientY };
+    svg.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 3) drag.moved = true;
+    if (!drag.moved) return;
+    const p = pt(e); svg._aut.pos[drag.id] = { x: Math.round(p.x + drag.ox), y: Math.round(p.y + drag.oy) }; redraw();
+  });
+  const end = () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (d.moved) { fitView(svg._aut); renderAllDiagrams(); } else if (svg.id === 'diagram1') flashCard(d.id);
+  };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+}
+function flashCard(id) {
+  const c = ctab === 'lalr' ? document.querySelector(`#cards .card[data-id="${A1.states[id].core}"]`) : document.querySelector(`#cards .card[data-id="${id}"]`);
+  if (!c) return;
+  c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
+}
+
+/* ---------- 1. 文法 ---------- */
+function renderGrammarInfo() {
+  const lis = G.prods.map((p, i) => `<li class="${i === 0 ? 'aug' : ''}"><span class="no">(${i})</span>${prodHTML(p)}${i === 0 ? '　← 追加した規則' : ''}</li>`).join('');
+  el('grammarInfo').innerHTML = `
+    <div class="hint">拡大文法（開始記号 ${symHTML(G.start)} に対して ${symHTML(G.aug)}→${symHTML(G.start)}$ を加え、入力の終わりを $ で表す）</div>
+    <ol class="prods">${lis}</ol>
+    <div class="kv" style="margin-top:8px"><b>非終端記号:</b> ${G.nts.map(esc).join(' ')}</div>
+    <div class="kv"><b>終端記号:</b> ${G.terms.map(esc).join(' ')}</div>
+    <div class="hint" style="margin-top:6px">記号の区切り: ${G.mode === 'word' ? '単語単位（英数字の並び・記号の並びをそれぞれ1記号、括弧と , ; は1文字で1記号）' : '1文字 = 1記号'}</div>`;
+}
+
+/* ---------- 2. 閉包の構成 ---------- */
+let ctab = 'lr0', cstep = { lr0: 0, clr: 0, lalr: 0 };
+const cmax = () => ctab === 'lalr' ? A0.states.length - 1 : autOf(ctab).steps.length - 1;
+function renderConstruction() {
+  document.querySelectorAll('.tab').forEach(b => { b.classList.toggle('on', b.dataset.tab === ctab); b.setAttribute('aria-selected', b.dataset.tab === ctab); });
+  const n = cmax(), k = cstep[ctab];
+  el('cCount').textContent = `ステップ ${k + 1} / ${n + 1}`;
+  el('cFirst').disabled = el('cPrev').disabled = k === 0;
+  el('cNext').disabled = el('cLast').disabled = k === n;
+  el('lgLalr').hidden = ctab !== 'lalr';
+  el('cards').classList.toggle('wide', ctab !== 'lr0');
+  el('cHint').textContent = {
+    lr0: '初期状態の閉包から始め、Goto(I, α) を新しい閉包が現れなくなるまで繰り返します。',
+    clr: '各項に「次に来てよい記号（先読み）」の集合を付けた LR(1)項で、同じ手順を繰り返します。先読みが違えば別の状態になります。',
+    lalr: 'CLR(1) の状態のうち、先読みを除くと同じ項集合になるものを1つにまとめます。',
+  }[ctab];
+  if (ctab === 'lalr') renderLALR(k, n); else renderGoto(autOf(ctab), ctab, k, n);
+}
+function renderGoto(AUT, kind, k, n) {
+  const steps = AUT.steps, st = steps[k];
+  const gotoLabel = st.type === 'init' ? `Closure({ ${itemHTML({ p: 0, d: 0 })} })` : `Goto(${stPlain(st.from)}, ${symHTML(st.sym)})`;
+  const visS = new Set(), visE = new Set();
+  for (let i = 0; i <= k; i++) { visS.add(steps[i].to); if (steps[i].type === 'goto') visE.add(steps[i].from + '|' + steps[i].sym); }
+  const T = AUT.states[st.to], items = T.items.map(it => itemHTML(it, '', shownLA(kind, T, it))).join('； ');
+  let ex;
+  if (st.type === 'init') ex = `初期状態: ${stHTML(kind, 0)} ＝ ${gotoLabel} ＝ { ${items} }<br><span class="hint">` + (kind === 'clr'
+    ? '項 [A→α・Bβ, a] があれば、B を左辺とする各規則の先頭に・を置いた項を、先読み First(βa) を付けて加えます（β が空列になりうるときは a も引き継ぐ）。'
+    : '注目点・の直後が非終端記号なら、その記号を左辺とする規則の先頭に・を置いた項を加えていきます。') + '</span>';
+  else if (st.isNew) ex = `${gotoLabel} ＝ ${stHTML(kind, st.to)} ＝ { ${items} }　<span class="tag ok">新しい閉包</span><br><span class="hint">${stPlain(st.from)} の項のうち・の直後が ${symHTML(st.sym)} のものについて・を1つ進め${kind === 'clr' ? '（先読みはそのまま）' : ''}、その閉包を求めます。</span>`;
+  else ex = `${gotoLabel} ＝ { ${items} } ＝ ${stHTML(kind, st.to)}　<span class="tag bl">すでにある閉包</span>${st.from === st.to ? '（自分自身への遷移）' : ''}` + (kind === 'clr' ? '<br><span class="hint">LR(1) では項だけでなく先読み集合まで一致したときに同じ状態とみなします。</span>' : '');
+  if (k === n) ex += `<br><b>新しい閉包が現れなくなったので完成です（閉包 ${AUT.states.length} 個` + (kind === 'clr' ? `、LR(0) 状態遷移図は ${A0.states.length} 個` : '') + '）。</b>';
+  el('cExplain').innerHTML = ex;
+  el('cards').innerHTML = AUT.states.filter(s => visS.has(s.id)).map(s => {
+    const head = s.from ? `Goto(${stPlain(s.from.state)},${symHTML(s.from.sym)}) ＝ ` : '';
+    return cardHTML(kind, kind, s, head, s.id === st.to ? 'cur' : (st.type === 'goto' && s.id === st.from ? 'src' : ''));
+  }).join('');
+  const cur = document.querySelector('#cards .card.cur'); if (cur && k < n) cur.scrollIntoView({ block: 'nearest' });
+  drawDiagram(el('diagram1'), AUT, { method: kind, kind, states: visS, edges: visE, hiEdges: st.type === 'goto' ? new Set([st.from + '|' + st.sym]) : null, ring: new Set([st.to]) });
+}
+function renderLALR(k, n) {
+  const T = A0.states[k], grp = T.group, names = grp.map(i => stPlain(i)).join(' と ');
+  let ex = grp.length > 1
+    ? `CLR(1) の ${names} は、先読みを除くと同じ項集合です → 1つにまとめて LALR(1) の ${stHTML('lalr', k)} とし、先読みは和集合にします。`
+    : `CLR(1) の ${names} と同じ項集合の状態はほかにありません → そのまま LALR(1) の ${stHTML('lalr', k)} になります。`;
+  ex += `<br><span class="hint">まとめた後の項集合は LR(0) 状態遷移図の ${stPlain(k)} と同じなので、LALR(1) の状態番号は LR(0) の番号を使います。</span>`;
+  if (grp.length > 1 && AN.lalr[k].some(c => c.reds.length > 1) && grp.every(i => !AN.clr[i].length))
+    ex += `<br><span class="tag ng">まとめたことで先読みが重なり、還元・還元競合が生じました</span>`;
+  if (k === n) ex += `<br><b>完成です。状態数は CLR(1) の ${A1.states.length} 個から ${A0.states.length} 個に減り、図の形は LR(0) 状態遷移図と同じになります。</b>`;
+  el('cExplain').innerHTML = ex;
+  el('cards').innerHTML = A0.states.slice(0, k + 1).map(s =>
+    cardHTML('lalr', 'lalr', s, `CLR(1) の ${s.group.map(i => stPlain(i)).join(', ')} → `, s.id === k ? 'cur' : '')).join('');
+  const cur = document.querySelector('#cards .card.cur'); if (cur && k < n) cur.scrollIntoView({ block: 'nearest' });
+  const fill = new Map(), ring = new Set(grp);
+  A1.states.forEach(s => { if (s.core < k) fill.set(s.id, 'done'); else if (s.core === k) fill.set(s.id, 'top'); });
+  drawDiagram(el('diagram1'), A1, { method: 'clr', kind: 'clr', fill, ring });
+}
+
+/* ---------- 3. 判定 ---------- */
+function confHTML(list) {
+  if (!list.length) return `<span class="tag ok">矛盾なし → 解決</span>`;
+  return list.map(c => `<span class="tag ng">${c.shift ? 'シフト・還元競合' : '還元・還元競合'}が残る: 先読み ${esc(c.sym)}</span>`).join('<br>');
+}
+function renderJudge() {
+  const P = G.prods, inad = A0.states.filter(s => A0.info[s.id].inadequate);
+  const v = (ok, name, why) => `<div class="verdict ${ok ? 'ok' : 'ng'}">${ok ? '✔' : '✘'} ${name}文法${ok ? 'です' : 'ではありません'}${ok || !why ? '' : '（' + why + '）'}</div>`;
+  const bad = c => c.map((x, i) => x.length ? 'I' + i : '').filter(Boolean).join(', ');
+  let h = `<div class="verdicts">
+    ${v(AN.isLR0, 'LR(0)', '不都合な状態: ' + inad.map(s => 'I' + s.id).join(', '))}
+    ${v(AN.isSLR, 'SLR(1)', '競合が残る状態: ' + bad(AN.slr))}
+    ${v(AN.isLALR, 'LALR(1)', '競合が残る状態: ' + bad(AN.lalr))}
+    ${v(AN.isCLR, 'CLR(1)', 'CLR(1) 状態遷移図で競合する状態: ' + bad(AN.clr))}
+  </div>
+  <p class="hint" style="margin:0 0 6px">状態数: LR(0)・SLR(1)・LALR(1) は <b>${A0.states.length}</b> 個、CLR(1) は <b>${A1.states.length}</b> 個。
+  扱える文法の広さは LR(0) ⊂ SLR(1) ⊂ LALR(1) ⊂ CLR(1)。違いは「完全項をどの先読みのときに還元するか」だけです：
+  LR(0) は常に還元、SLR(1) は Follow(左辺)、LALR(1)・CLR(1) はその状態のその完全項に付いた先読み集合。</p>`;
+  if (inad.length) {
+    h += `<div class="tblwrap"><table><tr><th>LR(0) の不都合な状態</th><th>完全項（還元）</th><th>シフトできる終端記号</th><th>LR(0)</th><th>SLR(1)：Follow で判断</th><th>LALR(1)：先読み集合で判断</th></tr>`;
+    for (const s of inad) {
+      const inf = A0.info[s.id];
+      const kinds = [inf.sr ? 'シフト・還元競合' : '', inf.rr ? '還元・還元競合' : ''].filter(Boolean).map(k => `<span class="tag bl">${k}</span>`).join(' ');
+      let a = '', b = '';
+      inf.completes.forEach(c => {
+        a += `Follow(${esc(P[c.p].lhs)}) ＝ <span class="mono">${setHTML(FF.follow[P[c.p].lhs])}</span> なら ${itemHTML(c)} を還元<br>`;
+        b += `<span class="mono">${setHTML(s.lalr.get(ck(c)))}</span> なら ${itemHTML(c)} を還元<br>`;
+      });
+      h += `<tr><td>${stHTML('lr0', s.id)}</td><td>${inf.completes.map(c => itemHTML(c)).join('<br>')}</td><td class="mono">${inf.shiftT.map(esc).join(', ') || '—'}</td><td>${kinds}</td><td>${a}${confHTML(AN.slr[s.id])}</td><td>${b}${confHTML(AN.lalr[s.id])}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+  h += `<h3 style="font-size:14px;margin:14px 0 4px">CLR(1) 状態遷移図での競合</h3>`;
+  if (AN.isCLR) h += `<div><span class="tag ok">競合なし</span>　どの状態でも、先読み1字句で動作が1つに決まります。</div>`;
+  else {
+    h += `<div class="tblwrap"><table><tr><th>CLR(1) の状態</th><th>先読み</th><th>取りうる動作</th></tr>`;
+    AN.clr.forEach((list, i) => list.forEach(c => {
+      h += `<tr><td>${stHTML('clr', i)}</td><td class="mono">${esc(c.sym)}</td><td>${[c.shift ? 'シフト' : '', ...c.reds.map(r => itemHTML(r) + ' を還元')].filter(Boolean).join('　／　')}</td></tr>`;
+    }));
+    h += `</table></div>`;
+  }
+  h += `<h3 style="font-size:14px;margin:14px 0 4px">Follow 集合（SLR(1) で使用）</h3><div class="tblwrap"><table><tr><th>非終端記号</th>${G.nts.slice(1).map(n => `<td class="mono">${esc(n)}</td>`).join('')}</tr><tr><th>Follow</th>${G.nts.slice(1).map(n => `<td class="mono">${setHTML(FF.follow[n])}</td>`).join('')}</tr></table></div>`;
+  el('judge').innerHTML = h;
+}
+
+/* ---------- 4. 構文解析 ---------- */
+let pmode = 'slr', PA = null, tokens = [], trace = [], cur = 0, autoTimer = null;   // PA: 解析に使うオートマトン
+const MODE_HINT = {
+  lr0: 'LR(0) 状態遷移図を使い、先読みをせずに、完全項があれば還元します。',
+  slr: 'LR(0) 状態遷移図を使い、先読みした1字句が Follow(左辺) に入っているときだけ還元します。',
+  lalr: 'LR(0) と同じ形の状態遷移図を使い、先読みした1字句が完全項の先読み集合（CLR(1) からまとめたもの）に入っているときだけ還元します。',
+  clr: 'CLR(1) 状態遷移図を使い、先読みした1字句が完全項の先読み集合に入っているときだけ還元します。',
+};
+const topState = cfg => cfg.stack[cfg.stack.length - 1].state;
+const laName = c => pmode === 'slr' ? `Follow(${esc(G.prods[c.p].lhs)})` : `${itemHTML(c)} の先読み集合`;
+// ある配置で取りうる動作の一覧。先頭が「次へ」で選ばれる既定の動作。
+function actionsFor(cfg) {
+  const s = PA.states[topState(cfg)], a = tokens[cfg.pos], inf = PA.info[s.id], acts = [];
+  const to = a !== undefined ? s.trans.get(a) : undefined;
+  const shift = to !== undefined ? { type: 'shift', sym: a, to, items: s.items.filter(it => G.prods[it.p].rhs[it.d] === a) } : null;
+  const reds = inf.completes.filter(c => pmode === 'lr0' || c.p === 0 || (a !== undefined && laOf(pmode, s, c).has(a)))
+    .map(c => ({ type: c.p === 0 ? 'accept' : 'reduce', prod: c.p, item: c }));
+  if (pmode === 'lr0') { acts.push(...reds); if (shift) acts.push(shift); }   // LR(0): 還元を優先
+  else { if (shift) acts.push(shift); acts.push(...reds); }
+  return acts;
+}
+function apply(cfg, act) {
+  const stack = cfg.stack.slice();
+  if (act.type === 'shift') { stack.push({ sym: act.sym, state: act.to }); return { stack, pos: cfg.pos + 1 }; }
+  const p = G.prods[act.prod];
+  stack.length -= p.rhs.length;
+  const back = stack[stack.length - 1].state;
+  stack.push({ sym: p.lhs, state: PA.states[back].trans.get(p.lhs) });
+  return { stack, pos: cfg.pos };
+}
+function actHTML(act) {
+  if (act.type === 'shift') return `${act.items.map(it => itemHTML(it)).join('，')} でシフト`;
+  if (act.type === 'accept') return `${itemHTML(act.item)} を還元＝<span class="acc">受理</span>`;
+  return `${itemHTML(act.item)} を還元`;
+}
+function stepForward(k) {
+  const cfg = trace[cur];
+  if (k === undefined && cur < trace.length - 1) { cur++; return true; }
+  const acts = actionsFor(cfg);
+  if (!acts.length || acts[0].type === 'accept') return false;
+  const act = acts[k || 0];
+  trace.length = cur + 1;
+  cfg.act = act; cfg.conflict = acts.length > 1;
+  trace.push(apply(cfg, act)); cur++;
+  return true;
+}
+function startParse() {
+  stopAuto();
+  el('parseError').textContent = '';
+  pmode = document.querySelector('input[name=pmode]:checked').value; PA = autOf(pmode);
+  el('pModeHint').textContent = MODE_HINT[pmode];
+  let t = tokenize(el('parseInput').value, G.mode, G.terms);
+  if (t[t.length - 1] === EOF) t.pop();
+  const bad = t.filter(x => !G.terms.includes(x) || x === EOF);
+  if (bad.length) { el('parseError').textContent = `入力に文法の終端記号でない記号があります: ${[...new Set(bad)].join(' ')}`; el('parseBody').hidden = true; return; }
+  tokens = [...t, EOF];
+  trace = [{ stack: [{ sym: null, state: 0 }], pos: 0 }]; cur = 0;
+  el('parseBody').hidden = false;
+  renderParse();
+}
+function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; el('pAuto').textContent = '▶ 自動再生'; } }
+function stackHTML(cfg) {
+  return cfg.stack.map(e => (e.sym === null ? '' : esc(e.sym) + G.sep) + `<span class="st">I<sub>${e.state}</sub></span>`).join(' ');
+}
+function renderParse() {
+  const cfg = trace[cur], acts = actionsFor(cfg), s = PA.states[topState(cfg)], inf = PA.info[s.id], a = tokens[cfg.pos];
+  const accepted = acts.length && acts[0].type === 'accept', failed = !acts.length;
+  const next = acts[0], kind = pmode === 'clr' ? 'clr' : pmode === 'lalr' ? 'lalr' : 'lr0';
+  el('pCount').textContent = `ステップ ${cur + 1}` + (accepted ? '（受理）' : failed ? '（エラー）' : '');
+  el('pFirst').disabled = el('pPrev').disabled = cur === 0;
+  el('pNext').disabled = el('pLast').disabled = el('pAuto').disabled = accepted || failed;
+  if (accepted || failed) stopAuto();
+
+  // 棚
+  const handle = next && next.type !== 'shift' ? G.prods[next.prod].rhs.length : 0;
+  el('shelf').innerHTML = cfg.stack.map((e, i) => {
+    const h = i >= cfg.stack.length - handle ? 'handle' : '', top = i === cfg.stack.length - 1;
+    const nw = top && cur > 0 ? 'new' : '';
+    return (e.sym === null ? '' : `<span class="cell symb ${h} ${nw}">${esc(e.sym)}</span>`) +
+      `<span class="cell state ${top ? 'top' : ''} ${h} ${nw}"><span class="st">I<sub>${e.state}</sub></span></span>`;
+  }).join('');
+  // 入力
+  el('inputLine').innerHTML = `<span class="used">${symsHTML(tokens.slice(0, cfg.pos))}</span><span class="mark">・</span>` +
+    (a !== undefined ? `<span class="look">${esc(a)}</span>${G.sep}${symsHTML(tokens.slice(cfg.pos + 1))}` : '<span class="hint">（入力なし）</span>');
+  el('curState').innerHTML = cardHTML(pmode, kind, s, '', '', 'display:inline-block;min-width:190px');
+
+  // 説明
+  let ex = '', cls = '';
+  const reduceDetail = act => {
+    const p = G.prods[act.prod], n = p.rhs.length, back = cfg.stack[cfg.stack.length - 1 - n].state;
+    const popped = cfg.stack.slice(cfg.stack.length - n).map(e => stPlain(e.state)).join(' ');
+    return (n ? `棚から ${symsHTML(p.rhs)} の ${n} 記号分（状態 ${popped}）を取り除いて ${stPlain(back)} まで巻き戻し、` : `右辺が ε なので棚からは何も取り除かず、${stPlain(back)} から`) +
+      `還元した ${symHTML(p.lhs)} を入力と見なして遷移 → ${stPlain(PA.states[back].trans.get(p.lhs))}`;
+  };
+  const laLine = (c, verb) => { const L = laOf(pmode, s, c), inn = L.has(a);
+    return `先読み ${symHTML(a)} ${inn ? '∈' : '∉'} ${laName(c)} ＝ <span class="mono">${setHTML(L)}</span> なので ${pmode === 'slr' ? itemHTML(c) + ' は' : ''}還元${inn ? 'できます' : verb}。`; };
+  if (accepted) { cls = 'ok'; ex = `<b>受理</b>：入力をすべて読み終え、${itemHTML(next.item)} を還元して ${symHTML(G.aug)} になりました。`; }
+  else if (failed) {
+    cls = 'ng';
+    ex = `<b>エラー（不受理）</b>：${stHTML(pmode, s.id)} では` + (a === undefined ? '入力が尽きており' : `次の入力 ${symHTML(a)} に対して`) + 'シフトも還元もできません。';
+    if (pmode !== 'lr0' && a !== undefined) inf.completes.filter(c => c.p !== 0).forEach(c => { ex += '<br>' + laLine(c, 'できません'); });
+    if (pmode === 'lr0' && trace.some(c => c.conflict || PA.info[topState(c)].inadequate)) ex += `<br><span class="hint">途中で不都合な状態を通っています。そこで別の動作を選ぶか、先読みを使う方式で解析してみてください。</span>`;
+  } else {
+    const multi = acts.length > 1;
+    if (pmode === 'lr0') {
+      if (inf.inadequate) {
+        cls = 'warn';
+        ex = `⚠ ${stHTML(pmode, s.id)} は<b>不都合な状態</b>（${[inf.sr ? 'シフト・還元競合' : '', inf.rr ? '還元・還元競合' : ''].filter(Boolean).join('・')}）です。LR(0) は先読みをしないので、どの動作が正しいか決められません。<br>`;
+        ex += multi ? `「次 ▶」では還元を優先して ${actHTML(next)} を行います。` : `ここでは ${actHTML(next)} を行います。`;
+      } else ex = next.type === 'shift'
+        ? `${stHTML(pmode, s.id)} に完全項はないので、入力 ${symHTML(a)} を読んで ${actHTML(next)} → ${stPlain(next.to)}`
+        : `${stHTML(pmode, s.id)} は完全項だけを含むので、先読みせずに ${actHTML(next)}。`;
+    } else {
+      if (a !== undefined) inf.completes.filter(c => c.p !== 0).forEach(c => { ex += laLine(c, 'しません') + '<br>'; });
+      if (multi) { cls = 'warn'; ex += `⚠ 先読み ${symHTML(a)} でも動作が1つに決まりません（${{ slr: 'SLR(1)', lalr: 'LALR(1)', clr: 'CLR(1)' }[pmode]} の競合）。「次 ▶」では ${actHTML(next)} を行います。`; }
+      else ex += next.type === 'shift' ? `先読み ${symHTML(a)} で ${actHTML(next)} → ${stPlain(next.to)}` : `${actHTML(next)}。`;
+    }
+    if (next.type === 'reduce') ex += `<br><span class="hint">${reduceDetail(next)}</span>`;
+    if (multi) ex += '<br>動作を選ぶ: ' + acts.map((ac, i) => `<button data-act="${i}">${actHTML(ac)}${i === 0 ? '（既定）' : ''}</button>`).join('');
+  }
+  const box = el('pExplain'); box.className = 'explain ' + cls; box.innerHTML = ex;
+  box.querySelectorAll('button[data-act]').forEach(b => b.onclick = () => { stopAuto(); stepForward(+b.dataset.act); renderParse(); });
+
+  // 配置の表
+  let rows = `<tr><th>#</th><th>棚</th><th style="text-align:right">入力</th><th>動作</th></tr>`;
+  for (let i = 0; i <= cur; i++) {
+    const c = trace[i]; let act;
+    if (i < cur) act = actHTML(c.act) + (c.conflict || (pmode === 'lr0' && PA.info[topState(c)].inadequate) ? ' <span class="bang">(!)</span>' : '');
+    else act = accepted ? actHTML(next) : failed ? '<span class="acc">エラー</span>' : '<span class="hint">次: </span>' + actHTML(next);
+    rows += `<tr class="${i === cur ? 'cur' : ''}"><td>${i + 1}</td><td>${stackHTML(c)}</td><td class="in">${symsHTML(tokens.slice(c.pos))}</td><td class="act">${act}</td></tr>`;
+  }
+  el('trace').innerHTML = rows;
+  const w = el('trace').parentElement; w.scrollTop = w.scrollHeight;
+
+  // 状態遷移図：棚にある状態と、そこまでの道筋を強調
+  const fill = new Map(), hi = new Set();
+  cfg.stack.forEach((e, i) => { fill.set(e.state, 'stack'); if (i > 0) hi.add(cfg.stack[i - 1].state + '|' + e.sym); });
+  fill.set(s.id, 'top');
+  drawDiagram(el('diagram2'), PA, { method: pmode, kind, fill, hiEdges: hi });
+}
+
+/* ---------- 全体の制御 ---------- */
+function renderAllDiagrams() { if (!A0) return; renderConstruction(); if (!el('parseBody').hidden) renderParse(); }
+function build() {
+  stopAuto();
+  el('grammarError').textContent = '';
+  try {
+    G = parseGrammar(el('grammar').value, el('tokMode').value);
+    FF = computeFollow(G);
+    A0 = buildAutomaton(G, FF, false); A1 = buildAutomaton(G, FF, true);
+    mergeLALR(); AN = analyze();
+  } catch (e) {
+    A0 = null; el('grammarError').textContent = e.message;
+    ['secAutomaton', 'secJudge', 'secParse'].forEach(id => el(id).hidden = true); el('grammarInfo').innerHTML = '';
+    return;
+  }
+  ['secAutomaton', 'secJudge', 'secParse'].forEach(id => el(id).hidden = false);
+  el('parseBody').hidden = true; el('parseError').textContent = ''; el('pModeHint').textContent = '';
+  layout(A0); layout(A1);
+  cstep = { lr0: A0.steps.length - 1, clr: A1.steps.length - 1, lalr: A0.states.length - 1 };
+  renderGrammarInfo(); renderConstruction(); renderJudge();
+}
+function loadExample(i) {
+  const ex = EXAMPLES[i]; el('grammar').value = ex.text; el('tokMode').value = ex.mode; el('parseInput').value = ex.input; build();
+}
+
+EXAMPLES.forEach((ex, i) => el('examples').add(new Option(ex.name, i)));
+el('examples').onchange = e => loadExample(+e.target.value);
+el('btnBuild').onclick = build;
+el('tokMode').onchange = build;
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => { ctab = b.dataset.tab; renderConstruction(); });
+el('cFirst').onclick = () => { cstep[ctab] = 0; renderConstruction(); };
+el('cPrev').onclick = () => { cstep[ctab] = Math.max(0, cstep[ctab] - 1); renderConstruction(); };
+el('cNext').onclick = () => { cstep[ctab] = Math.min(cmax(), cstep[ctab] + 1); renderConstruction(); };
+el('cLast').onclick = () => { cstep[ctab] = cmax(); renderConstruction(); };
+el('pStart').onclick = startParse;
+el('parseInput').addEventListener('keydown', e => { if (e.key === 'Enter') startParse(); });
+document.querySelectorAll('input[name=pmode]').forEach(r => r.onchange = () => { if (!el('parseBody').hidden) startParse(); });
+el('pFirst').onclick = () => { stopAuto(); cur = 0; renderParse(); };
+el('pPrev').onclick = () => { stopAuto(); cur = Math.max(0, cur - 1); renderParse(); };
+el('pNext').onclick = () => { stopAuto(); stepForward(); renderParse(); };
+el('pLast').onclick = () => { stopAuto(); let n = 0; while (n++ < 5000 && stepForward()); renderParse(); };
+el('pAuto').onclick = () => {
+  if (autoTimer) { stopAuto(); return; }
+  el('pAuto').textContent = '⏸ 停止';
+  autoTimer = setInterval(() => { if (!stepForward()) stopAuto(); renderParse(); }, 900);
+};
+enableDrag(el('diagram1'), renderConstruction);
+enableDrag(el('diagram2'), renderParse);
+loadExample(0);
+</script>
+</body>
+</html>
