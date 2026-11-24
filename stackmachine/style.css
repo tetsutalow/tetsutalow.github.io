@@ -1,0 +1,102 @@
+/* LR(0)・SLR(1) 可視化サイトと同じ配色・部品に揃えたスタイル */
+:root{
+  --bg:#faf8f6; --panel:#ffffff; --ink:#22201f; --sub:#6b6562; --line:#ddd6d1;
+  --accent:#8f1d2c; --accent-soft:#f6e9eb;
+  --complete:#d4202a; --inadequate:#1565c0;
+  --node:#fbd9dc; --stack:#ffd34d; --top:#ff9a1f; --path:#f0a400;
+  --ok:#1b7f4b; --ng:#c62828;
+  --mono:"Cascadia Mono","Consolas","Menlo","BIZ UDGothic","MS Gothic",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Hiragino Sans","Yu Gothic UI","Meiryo","Noto Sans JP",sans-serif;line-height:1.6;font-size:15px}
+header{background:var(--accent);color:#fff;padding:18px 24px}
+header h1{margin:0;font-size:22px;font-weight:600;letter-spacing:.02em}
+header p{margin:4px 0 0;font-size:13px;opacity:.85}
+main{max-width:1320px;margin:0 auto;padding:16px 16px 80px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin-top:16px}
+section>h2{margin:0 0 10px;font-size:17px;color:var(--accent);display:flex;align-items:baseline;gap:10px}
+section>h2 .num{background:var(--accent);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;
+  align-items:center;justify-content:center;font-size:13px;flex:none;transform:translateY(-1px)}
+.hint{color:var(--sub);font-size:13px}
+p.hint{margin:10px 0 0}
+.mono,code{font-family:var(--mono)}
+input[type=text]{font-family:var(--mono);font-size:15px;border:1px solid #bdb5af;border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+button{font:inherit;border:1px solid #bdb5af;background:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;color:var(--ink)}
+button:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover:not(:disabled){background:#a82536}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.error{color:var(--ng);font-weight:600;margin:8px 0 0;white-space:pre-wrap;font-family:var(--mono)}
+.controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+.controls .count{font-family:var(--mono);color:var(--sub);margin:0 6px;font-size:13px}
+.controls label{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;margin-left:6px}
+input[type=range]{accent-color:var(--accent)}
+.explain{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:4px;padding:8px 12px;margin:8px 0;min-height:42px}
+.explain.ok{background:#e6f4ec;border-left-color:var(--ok)}
+.explain.ng{background:#fdeaea;border-left-color:var(--ng)}
+
+#expr{flex:1;min-width:260px;font-size:19px;letter-spacing:.04em}
+.examples button{font-family:var(--mono);font-size:13px;padding:2px 10px}
+
+/* 小見出し付きの箱（LR サイトの shelfbox と同じ） */
+.shelfbox{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
+.shelfbox h3{margin:0 0 4px;font-size:13px;color:var(--sub);font-weight:600}
+.shelfbox h3:not(:first-child){margin-top:10px}
+.split{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.grow{flex:1;min-width:300px}
+
+/* トークン・逆ポーランド記法の並び */
+.chips{display:flex;flex-wrap:wrap;gap:3px;min-height:36px;align-items:center}
+.chip,.cell,.slot,.fly{font-family:var(--mono);font-size:17px;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.chip{padding:3px 9px;min-width:34px;background:#fff;border:1px solid #bdb5af;font-weight:700;transition:opacity .2s}
+.chip.num{background:var(--stack);border-color:#c79a00;font-weight:400}
+.chip.done{opacity:.35}
+.chip.cur{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.new,.cell.new,.ins.new,.slot.filled.new{animation:pop .35s}
+@keyframes pop{0%{transform:translateY(-10px);opacity:0}100%{transform:none;opacity:1}}
+
+/* スタック（底が下、一番上が上）。LR サイトの「棚」を縦に立てた形 */
+.stack{display:flex;flex-direction:column-reverse;gap:3px;width:150px;min-height:290px;padding:6px 8px;
+  border-left:5px solid #7a6f69;border-right:5px solid #7a6f69;border-bottom:5px solid #7a6f69;
+  border-radius:0 0 4px 4px;background:#fbf7f2;margin-right:76px}
+.stack.small{width:110px;min-height:190px}
+.cell{height:34px;flex:none;position:relative;background:var(--stack);border:1px solid #c79a00}
+.cell:last-child{background:var(--top);border-color:#c86a00;font-weight:700}
+.stack.small .cell,.stack.small .cell:last-child{background:#fff;border:1px solid #bdb5af;font-weight:700}
+.cell:last-child::after{content:"◀ 一番上";position:absolute;left:calc(100% + 16px);white-space:nowrap;
+  font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;font-size:12.5px;font-weight:400;color:var(--sub)}
+
+/* コード一覧 */
+.code{font-family:var(--mono);font-size:16px;border:1px solid var(--line);border-radius:6px;padding:4px 0;min-width:190px;min-height:48px;background:#fff}
+.ins{display:flex;gap:8px;padding:1px 14px 1px 6px;align-items:center}
+.ins .arrow{width:16px;color:var(--accent);visibility:hidden}
+.ins .no{width:24px;text-align:right;color:var(--sub);font-size:13px}
+.ins .arg{padding:0 4px;border-radius:4px}
+.ins.cur{background:#fff6da;font-weight:700}
+.ins.cur .arrow{visibility:visible}
+.ins.done{color:#b9b0aa}
+.ins.done .no{color:#b9b0aa}
+
+/* 表 */
+table{border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{border:1px solid var(--line);padding:4px 10px;text-align:left;vertical-align:middle}
+th{background:#f3eeeb;font-weight:600;white-space:nowrap}
+table.rules tr.hit td:nth-child(-n+2){background:#fff6da;font-weight:700}
+
+/* 演算装置 */
+.alu{display:flex;align-items:center;gap:10px;min-height:42px}
+.slot{width:110px;height:34px;border:1px dashed #bdb5af;background:#fff}
+.slot.filled{background:var(--stack);border:1px solid #c79a00}
+.slot.result.filled,.slot.out.filled{background:var(--node);border:1px solid var(--complete);color:var(--complete);font-weight:700}
+.slot.off{visibility:hidden}
+.opsym{font-family:var(--mono);font-size:19px;min-width:30px;text-align:center;font-weight:700;color:var(--accent)}
+
+/* 画面上を移動する数値 */
+.fly{position:fixed;z-index:1000;pointer-events:none;background:var(--top);border:1px solid #c86a00;font-weight:700;
+  box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.fly.res{background:var(--node);border-color:var(--complete);color:var(--complete)}
+
+@media (prefers-reduced-motion:reduce){.chip,.cell,.ins,.slot{animation:none!important;transition:none!important}}

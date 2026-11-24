@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>逆ポーランド記法とスタックマシンの可視化</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>逆ポーランド記法とスタックマシンの可視化</h1>
+  <p>数式 → 逆ポーランド記法 → スタックマシンのコード生成 → スタックマシンでの実行</p>
+</header>
+<main>
+
+<section>
+  <h2><span class="num">1</span>数式の入力</h2>
+  <div class="row">
+    <input id="expr" type="text" value="-(3 + 4) * 2 - 10 % 4" spellcheck="false" autocomplete="off" aria-label="数式">
+    <button id="btnBuild" class="primary">逆ポーランド記法とコードを作る</button>
+  </div>
+  <div class="row examples" style="margin-top:8px">
+    <span class="hint">例:</span>
+    <button class="ex">1 + 2 * 3</button>
+    <button class="ex">(1 + 2) * 3</button>
+    <button class="ex">10 - 4 - 3</button>
+    <button class="ex">-(3 + 4) * 2 - 10 % 4</button>
+    <button class="ex">7 * -2 + 20 / (9 - 4)</button>
+    <button class="ex">-7 / 2 + -7 % 2</button>
+  </div>
+  <p class="hint">
+    使えるのは、整数定数（<span class="mono">-3</span> のような負数も可）、二項演算子 <span class="mono">+ - * / %</span>、単項演算子 <span class="mono">+ -</span>、括弧 <span class="mono">( )</span>。
+    優先順位は 単項 &gt; <span class="mono">* / %</span> &gt; <span class="mono">+ -</span> で、二項演算子は左結合です。
+  </p>
+  <div class="error" id="error" role="alert" hidden></div>
+</section>
+
+<section id="sec1" hidden>
+  <h2><span class="num">2</span>逆ポーランド記法への変換</h2>
+  <div class="controls" id="ctl1"></div>
+  <div class="explain" id="msg1"></div>
+  <div class="split">
+    <div class="shelfbox">
+      <h3>演算子スタック</h3>
+      <div class="stack small" id="opStack"></div>
+    </div>
+    <div class="shelfbox grow">
+      <h3>入力（トークン列）</h3>
+      <div class="chips" id="tokens"></div>
+      <h3>出力（逆ポーランド記法）</h3>
+      <div class="chips" id="rpnOut"></div>
+    </div>
+  </div>
+</section>
+
+<section id="sec2" hidden>
+  <h2><span class="num">3</span>スタックマシンのコード生成</h2>
+  <div class="controls" id="ctl2"></div>
+  <div class="explain" id="msg2"></div>
+  <div class="split">
+    <div class="shelfbox">
+      <h3>生成されたコード</h3>
+      <div class="code" id="code2"></div>
+    </div>
+    <div class="shelfbox grow">
+      <h3>逆ポーランド記法</h3>
+      <div class="chips" id="rpn2"></div>
+      <h3>変換規則</h3>
+      <table class="rules">
+        <tr><th>逆ポーランド記法</th><th>生成する命令</th><th>動作</th></tr>
+        <tr><td>整数 <i>n</i></td><td class="mono">push <i>n</i></td><td><i>n</i> をスタックに積む</td></tr>
+        <tr><td class="mono">+</td><td class="mono">add</td><td rowspan="5">スタックから <i>b</i>、<i>a</i> の順に取り出し、<br><i>a</i> ○ <i>b</i> の結果を積む</td></tr>
+        <tr><td class="mono">-</td><td class="mono">sub</td></tr>
+        <tr><td class="mono">*</td><td class="mono">mul</td></tr>
+        <tr><td class="mono">/</td><td class="mono">div</td></tr>
+        <tr><td class="mono">%</td><td class="mono">mod</td></tr>
+        <tr><td><span class="mono">neg</span>（単項 -）</td><td class="mono">neg</td><td>スタックから 1 つ取り出し、符号を反転して積む</td></tr>
+        <tr><td>（式の終わり）</td><td class="mono">pop</td><td>スタックから結果を取り出す</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="sec3" hidden>
+  <h2><span class="num">4</span>スタックマシンでの実行</h2>
+  <div class="controls">
+    <button id="xReset">⏮ 最初</button>
+    <button id="xBack">◀ 前</button>
+    <button id="xStep" class="primary">次 ▶</button>
+    <button id="xAuto">▶ 自動再生</button>
+    <span class="count" id="xCount"></span>
+    <label>速度 <input id="xSpeed" type="range" min="1" max="5" value="3"></label>
+  </div>
+  <div class="explain" id="msg3"></div>
+  <div class="split">
+    <div class="shelfbox">
+      <h3>コード</h3>
+      <div class="code" id="code3"></div>
+    </div>
+    <div class="shelfbox">
+      <h3>スタック（下が底、上が一番上）</h3>
+      <div class="stack" id="stack"></div>
+    </div>
+    <div class="shelfbox grow">
+      <h3>演算装置</h3>
+      <div class="alu" id="alu">
+        <div class="slot" id="slotA"></div>
+        <div class="opsym" id="slotOp"></div>
+        <div class="slot" id="slotB"></div>
+        <div class="opsym">=</div>
+        <div class="slot result" id="slotR"></div>
+      </div>
+      <h3>取り出した結果</h3>
+      <div class="alu"><div class="slot out" id="slotOut"></div></div>
+    </div>
+  </div>
+  <p class="hint">
+    <span class="mono">div</span> は小数点以下を切り捨てます（0 に近づく方向。例: <span class="mono">-7 / 2 = -3</span>）。
+    <span class="mono">mod</span> の結果の符号は割られる数に合わせます（例: <span class="mono">-7 % 2 = -1</span>）。
+  </p>
+</section>
+
+</main>
+<script src="stackmachine.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
